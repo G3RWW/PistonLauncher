@@ -77,7 +77,3 @@ Installers land in `src-tauri/target/release/bundle/` (`nsis/` for the `.exe` in
 
 - Achievement sets tied to individual apps (data model and detail-page UI are already in place, ready for this)
 - Per-session history views (daily/weekly breakdowns)
-
-## License
-
-_Add your preferred license here._
