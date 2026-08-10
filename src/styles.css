@@ -981,3 +981,286 @@ body.is-dragging * {
   font-size: 12.5px;
   text-align: center;
 }
+
+/* ---------- Header menu bar ---------- */
+
+#content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+#app-header {
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  padding: 0 16px;
+  flex-shrink: 0;
+}
+
+.menu-bar {
+  display: flex;
+  gap: 4px;
+}
+
+.menu {
+  position: relative;
+}
+
+.menu-trigger {
+  background: none;
+  border: none;
+  color: var(--dim);
+  padding: 12px 14px;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+.menu-trigger:hover,
+.menu.open .menu-trigger {
+  color: var(--brass);
+  background: var(--panel-raised);
+}
+
+.menu-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
+  min-width: 190px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  z-index: 50;
+  flex-direction: column;
+}
+.menu.open .menu-dropdown {
+  display: flex;
+}
+
+.menu-dropdown button {
+  background: none;
+  border: none;
+  color: var(--bone);
+  text-align: left;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+}
+.menu-dropdown button:hover {
+  background: var(--panel);
+  color: var(--brass);
+}
+
+/* ---------- Theme modal (file-based) ---------- */
+
+.theme-active-label {
+  color: var(--dim);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11.5px;
+  margin: 0 0 14px;
+}
+.theme-active-label span {
+  color: var(--brass);
+}
+
+.load-theme-file-btn {
+  width: 100%;
+  margin-top: 12px;
+  background: var(--panel-raised);
+  border: 1px dashed var(--line);
+  color: var(--dim);
+  padding: 10px;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11.5px;
+}
+.load-theme-file-btn:hover {
+  border-color: var(--brass);
+  color: var(--brass);
+}
+
+/* ---------- Keyboard shortcuts modal ---------- */
+
+.hotkeys-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.hotkey-row {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.hotkey-keys {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--brass);
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
+  padding: 4px 8px;
+  text-align: center;
+}
+
+.hotkey-description {
+  color: var(--bone);
+  font-size: 12.5px;
+}
+
+/* ---------- Theme modal: System / Custom sections ---------- */
+
+.theme-section-label {
+  color: var(--dim);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  margin: 16px 0 8px;
+}
+.theme-section-label:first-of-type {
+  margin-top: 0;
+}
+
+.theme-swatch.active {
+  border-color: var(--brass);
+  color: var(--brass);
+}
+
+.custom-theme-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  padding: 4px;
+}
+
+.custom-theme-empty {
+  color: var(--dim);
+  font-size: 11.5px;
+  font-family: 'IBM Plex Mono', monospace;
+  padding: 10px 8px;
+  text-align: center;
+}
+
+.custom-theme-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.custom-theme-row:hover {
+  background: var(--panel-raised);
+}
+.custom-theme-row.active {
+  background: rgba(201, 151, 74, 0.08);
+}
+.custom-theme-row.active .custom-theme-name {
+  color: var(--brass);
+}
+
+.custom-theme-name {
+  color: var(--bone);
+  font-size: 12.5px;
+  flex: 1;
+}
+
+.custom-theme-delete {
+  background: none;
+  border: none;
+  color: var(--dim);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 6px;
+}
+.custom-theme-delete:hover {
+  color: var(--danger);
+}
+
+/* ---------- Confirmation dialog always sits above other modals ---------- */
+
+#dialog-modal {
+  z-index: 200;
+}
+
+/* ---------- "Now Running" strip in header ---------- */
+
+@keyframes runningPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.75); }
+}
+
+#app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.running-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.running-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.running-item:hover {
+  border-color: var(--brass);
+}
+
+.running-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--moss);
+  animation: runningPulse 1.4s ease infinite;
+  flex-shrink: 0;
+}
+
+.running-label {
+  color: var(--bone);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.running-time {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--dim);
+}
+
+/* ---------- Tile running-state corner dot ---------- */
+
+.tile.tile-running {
+  border-color: var(--moss);
+}
+
+.running-dot-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--moss);
+  box-shadow: 0 0 6px var(--moss);
+  animation: runningPulse 1.4s ease infinite;
+}

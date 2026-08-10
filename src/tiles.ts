@@ -1,6 +1,6 @@
 import type { AppEntry } from './types';
 import { setCurrentView, nextTileIndex, resetTileIndex, formatPlaytime, initials } from './state';
-import { totalPlaytimeFor } from './sessions';
+import { totalPlaytimeFor, hasActiveSession } from './sessions';
 import { launchAndTrack, renameApp, editAppPath, refreshIcon, deleteApp, changeCategory } from './actions';
 import { renderView } from './render';
 
@@ -113,6 +113,14 @@ export function buildTile(app: AppEntry): HTMLDivElement {
     tile.appendChild(badge);
   }
 
+  if (hasActiveSession(app.id)) {
+    tile.classList.add('tile-running');
+    const dot = document.createElement('div');
+    dot.className = 'running-dot-badge';
+    dot.title = 'Currently running';
+    tile.appendChild(dot);
+  }
+
   return tile;
 }
 
@@ -149,6 +157,18 @@ export function patchTileContent(tile: HTMLElement, app: AppEntry) {
     tile.appendChild(badge);
   } else if (!app.launchFailed && existingBadge) {
     existingBadge.remove();
+  }
+
+  const isRunning = hasActiveSession(app.id);
+  tile.classList.toggle('tile-running', isRunning);
+  const existingDot = tile.querySelector('.running-dot-badge');
+  if (isRunning && !existingDot) {
+    const dot = document.createElement('div');
+    dot.className = 'running-dot-badge';
+    dot.title = 'Currently running';
+    tile.appendChild(dot);
+  } else if (!isRunning && existingDot) {
+    existingDot.remove();
   }
 }
 

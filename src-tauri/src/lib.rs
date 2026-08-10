@@ -10,6 +10,43 @@ struct ScannedApp {
     category: String,
 }
 
+const KNOWN_VENDOR_PREFIXES: &[&str] = &[
+    "Adobe", "Microsoft", "Google", "Mozilla", "Oracle", "Autodesk",
+    "JetBrains", "Valve", "Epic Games", "Blizzard", "Ubisoft", "EA",
+    "Discord", "Zoom", "Slack", "Spotify", "NVIDIA", "AMD", "Intel",
+    "Corel", "Dropbox", "Steam", "Prusa", "Unity",
+];
+
+// Products whose shortcuts don't mention their vendor at all
+// (e.g. "PowerPoint" instead of "Microsoft PowerPoint").
+const KNOWN_PRODUCTS: &[(&str, &str)] = &[
+    ("onenote", "Microsoft"),
+    ("powerpoint", "Microsoft"),
+    ("outlook", "Microsoft"),
+    ("excel", "Microsoft"),
+    ("access", "Microsoft"),
+    ("publisher", "Microsoft"),
+    ("teams", "Microsoft"),
+    ("skype", "Microsoft"),
+    ("visio", "Microsoft"),
+];
+
+fn guess_vendor_from_name(name: &str) -> Option<String> {
+    let lower = name.to_lowercase();
+
+    for vendor in KNOWN_VENDOR_PREFIXES {
+        if lower.starts_with(&vendor.to_lowercase()) {
+            return Some(vendor.to_string());
+        }
+    }
+    for (product, vendor) in KNOWN_PRODUCTS {
+        if lower.contains(product) {
+            return Some(vendor.to_string());
+        }
+    }
+    None
+}
+
 #[tauri::command]
 fn scan_start_menu() -> Vec<ScannedApp> {
     let mut results = Vec::new();
@@ -45,17 +82,27 @@ fn scan_start_menu() -> Vec<ScannedApp> {
                             .unwrap_or("Unknown")
                             .to_string();
 
-                        // Suggest a category from the Start Menu subfolder, e.g.
-                        // .../Programs/Adobe/Photoshop.lnk -> "Adobe"
-                        let category = path
+                        let subfolder = path
                             .strip_prefix(base_path)
                             .ok()
                             .and_then(|rel| rel.parent())
                             .and_then(|parent| parent.file_name())
                             .and_then(|s| s.to_str())
                             .filter(|s| !s.is_empty())
-                            .unwrap_or("Uncategorized")
-                            .to_string();
+                            .map(|s| s.to_string());
+
+                        // A subfolder that just repeats the app's own name isn't a
+                        // useful vendor grouping (e.g. "Oracle VirtualBox\Oracle VirtualBox.lnk")
+                        let is_useful_subfolder = subfolder
+                            .as_ref()
+                            .map(|sf| sf.to_lowercase() != name.to_lowercase())
+                            .unwrap_or(false);
+
+                        let category = if is_useful_subfolder {
+                            subfolder.unwrap()
+                        } else {
+                            guess_vendor_from_name(&name).unwrap_or_else(|| "Uncategorized".to_string())
+                        };
 
                         results.push(ScannedApp { name, path: target, category });
                     }
@@ -106,8 +153,11 @@ fn find_pid_by_name(name: String) -> Option<u32> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![launch_app, is_running, find_pid_by_name, get_app_icon, scan_start_menu])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+    .plugin(tauri_plugin_dialog::init())
+    .plugin(tauri_plugin_fs::init())
+    .invoke_handler(tauri::generate_handler![
+        launch_app, is_running, find_pid_by_name, get_app_icon, scan_start_menu
+    ])
+    .run(tauri::generate_context!())
+    .expect("error while running tauri application");
 }

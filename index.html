@@ -14,29 +14,55 @@
         <a href="#" id="stats-link" class="home-link">Stats</a>
 
         <nav id="category-nav"></nav>
-
-        <div class="sidebar-footer">
-          <button id="open-add-panel-btn">+ Add Apps</button>
-          <button id="new-category-btn">+ New Category</button>
-          <button id="theme-btn">Theme</button>
-          <button id="export-data-btn">Export Data</button>
-          <button id="import-data-btn">Import Data</button>
-          <input type="file" id="import-file-input" accept="application/json" class="hidden" />
-        </div>
       </aside>
 
-      <main id="main">
-        <section id="recent-section">
-          <h2>Recently Played</h2>
-          <div id="recent-grid" class="grid"></div>
-        </section>
+      <div id="content-area">
+        <header id="app-header">
+          <div class="menu-bar">
+            <div class="menu" data-menu="file">
+              <button class="menu-trigger">File</button>
+              <div class="menu-dropdown">
+                <button id="open-add-panel-btn">Add Apps</button>
+                <button id="export-data-btn">Export Data...</button>
+                <button id="import-data-btn">Import Data...</button>
+              </div>
+            </div>
+            <div class="menu" data-menu="categories">
+              <button class="menu-trigger">Categories</button>
+              <div class="menu-dropdown">
+                <button id="new-category-btn">New Category</button>
+              </div>
+            </div>
+            <div class="menu" data-menu="view">
+              <button class="menu-trigger">View</button>
+              <div class="menu-dropdown">
+                <button id="theme-btn">Theme</button>
+              </div>
+            </div>
+            <div class="menu" data-menu="help">
+              <button class="menu-trigger">Help</button>
+              <div class="menu-dropdown">
+                <button id="hotkeys-btn">Keyboard Shortcuts</button>
+              </div>
+            </div>
+          </div>
 
-        <div id="library"></div>
+          <div id="running-bar" class="running-bar hidden"></div>
+        </header>
 
-        <div id="app-detail" class="hidden"></div>
+        <main id="main">
+          <section id="recent-section">
+            <h2>Recently Played</h2>
+            <div id="recent-grid" class="grid"></div>
+          </section>
 
-        <div id="app-stats" class="hidden"></div>
-      </main>
+          <div id="library"></div>
+
+          <div id="app-detail" class="hidden"></div>
+
+          <div id="app-stats" class="hidden"></div>
+        </main>
+      </div>
     </div>
 
     <!-- Ctrl+Space quick-launch overlay -->
@@ -102,30 +128,32 @@
     <div id="theme-modal" class="modal hidden">
       <div class="modal-content">
         <h2>Theme</h2>
+        <p class="theme-active-label">Active: <span id="active-theme-label"></span></p>
+
+        <div class="theme-section-label">System</div>
         <div class="theme-options">
-          <button class="theme-swatch" data-theme="blueprint">Blueprint</button>
-          <button class="theme-swatch" data-theme="steam">Steam</button>
-          <button class="theme-swatch" data-theme="midnight">Midnight</button>
-          <button class="theme-swatch" data-theme="custom">Custom</button>
-        </div>
-        <div id="custom-theme-controls" class="hidden">
-          <label>Background <input type="color" id="custom-ink" /></label>
-          <label>Panel <input type="color" id="custom-panel" /></label>
-          <label>Accent <input type="color" id="custom-brass" /></label>
-          <label>Text <input type="color" id="custom-bone" /></label>
+          <button class="theme-swatch" data-theme-name="Blueprint">Blueprint</button>
+          <button class="theme-swatch" data-theme-name="Steam">Steam</button>
+          <button class="theme-swatch" data-theme-name="Midnight">Midnight</button>
         </div>
 
-        <div class="custom-css-block">
-          <label for="custom-css-input">Custom CSS (overrides anything)</label>
-          <textarea id="custom-css-input" rows="6" placeholder="/* e.g. .tile { border-radius: 12px; } */"></textarea>
-          <div class="custom-css-actions">
-            <button id="custom-css-apply-btn">Apply CSS</button>
-            <button id="custom-css-clear-btn">Clear</button>
-          </div>
-        </div>
+        <div class="theme-section-label">Custom</div>
+        <div id="custom-theme-list" class="custom-theme-list"></div>
+        <button id="load-theme-file-btn" class="load-theme-file-btn">+ Add Custom Theme File (.css)...</button>
 
         <div class="modal-actions">
           <button id="theme-close-btn">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keyboard shortcuts help -->
+    <div id="hotkeys-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2>Keyboard Shortcuts</h2>
+        <div id="hotkeys-list" class="hotkeys-list"></div>
+        <div class="modal-actions">
+          <button id="hotkeys-close-btn">Close</button>
         </div>
       </div>
     </div>
