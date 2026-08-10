@@ -1,11 +1,49 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
   <head>
-    
+    <meta charset="UTF-8" />
+    <title>Piston Launcher</title>
+    <link rel="stylesheet" href="/src/styles.css" />
   </head>
-
   <body>
-    <button id="Launch-button">Launch App </button>
+    <div id="app">
+      <aside id="sidebar">
+        <h1 class="logo">Piston Launcher</h1>
+        <nav id="category-nav"></nav>
+        <button id="new-category-btn">+ New Category</button>
+      </aside>
+
+      <main id="main">
+        <div id="drop-zone">Drag a .exe here to add it</div>
+        <button id="scan-btn">Scan Installed Apps</button>
+
+        <div id="scan-modal" class="modal hidden">
+          <div class="modal-content">
+            <h2>Select apps to add</h2>
+            <input id="scan-filter" type="text" placeholder="Filter..." />
+            <div id="scan-list"></div>
+            <div class="modal-actions">
+              <button id="scan-cancel-btn">Cancel</button>
+              <button id="scan-add-btn">Add Selected</button>
+            </div>
+          </div>
+        </div>
+        <button id="toggle-manual-btn">Add manually</button>
+        <form id="add-form" class="hidden">
+          <input id="input-name" type="text" placeholder="App name" required />
+          <input id="input-path" type="text" placeholder="Full path to .exe" required />
+          <input id="input-category" type="text" placeholder="Category" required />
+          <button type="submit">Add App</button>
+        </form>
+
+        <section id="recent-section">
+          <h2>Recently Played</h2>
+          <div id="recent-grid" class="grid"></div>
+        </section>
+
+        <div id="library"></div>
+      </main>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
