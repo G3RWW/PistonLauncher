@@ -7,6 +7,7 @@ use walkdir::WalkDir;
 struct ScannedApp {
     name: String,
     path: String,
+    category: String,
 }
 
 #[tauri::command]
@@ -22,8 +23,9 @@ fn scan_start_menu() -> Vec<ScannedApp> {
         dirs.push(format!("{}\\Microsoft\\Windows\\Start Menu\\Programs", appdata));
     }
 
-    for dir in dirs {
-        for entry in WalkDir::new(&dir).into_iter().filter_map(|e| e.ok()) {
+    for base_dir in dirs {
+        let base_path = std::path::Path::new(&base_dir);
+        for entry in WalkDir::new(&base_dir).into_iter().filter_map(|e| e.ok()) {
             let path = entry.path();
             let is_lnk = path
                 .extension()
@@ -42,7 +44,20 @@ fn scan_start_menu() -> Vec<ScannedApp> {
                             .and_then(|s| s.to_str())
                             .unwrap_or("Unknown")
                             .to_string();
-                        results.push(ScannedApp { name, path: target });
+
+                        // Suggest a category from the Start Menu subfolder, e.g.
+                        // .../Programs/Adobe/Photoshop.lnk -> "Adobe"
+                        let category = path
+                            .strip_prefix(base_path)
+                            .ok()
+                            .and_then(|rel| rel.parent())
+                            .and_then(|parent| parent.file_name())
+                            .and_then(|s| s.to_str())
+                            .filter(|s| !s.is_empty())
+                            .unwrap_or("Uncategorized")
+                            .to_string();
+
+                        results.push(ScannedApp { name, path: target, category });
                     }
                 }
             }
@@ -68,7 +83,6 @@ fn is_running(pid: u32) -> bool {
     sys.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
     sys.process(Pid::from_u32(pid)).is_some()
 }
-
 use windows_icons::get_icon_base64_by_path;
 
 #[tauri::command]
