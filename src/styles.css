@@ -1391,34 +1391,24 @@ body.is-dragging * {
   font-style: italic;
 }
 
-/* ---------- Overlay window (Ctrl+Shift+O) ---------- */
+/* ---------- Overlay window ---------- */
 
 .overlay-panel {
   background: var(--panel);
   border: 1px solid var(--brass);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-  padding: 14px;
+  padding: 16px;
   height: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
 }
 
-.overlay-header {
+.overlay-hint-bar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 10px;
-  margin-bottom: 10px;
-  border-bottom: 1px solid var(--line);
-}
-
-.overlay-title {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 0.6px;
-  color: var(--brass);
-  text-transform: uppercase;
+  justify-content: flex-end;
 }
 
 .overlay-hint {
@@ -1427,42 +1417,127 @@ body.is-dragging * {
   color: var(--dim);
 }
 
-.overlay-list {
+.overlay-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  overflow-y: auto;
+  gap: 12px;
 }
 
-.overlay-row {
+.overlay-spotlight-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+}
+
+.overlay-spotlight-icon {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
   background: var(--panel-raised);
+  color: var(--brass);
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.overlay-spotlight-icon img { width: 32px; height: 32px; object-fit: contain; }
+
+.overlay-spotlight-name {
+  color: var(--bone);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.overlay-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.overlay-stat {
+  background: var(--panel-raised);
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.overlay-stat-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  color: var(--brass);
+}
+
+.overlay-stat-label {
+  font-size: 9.5px;
+  color: var(--dim);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.overlay-break-reminder {
+  background: rgba(181, 84, 74, 0.12);
+  border: 1px solid var(--danger);
+  color: var(--bone);
+  font-size: 11.5px;
   padding: 8px 10px;
 }
 
-.overlay-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--moss);
-  flex-shrink: 0;
+.overlay-note {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
-
-.overlay-name {
-  color: var(--bone);
-  font-size: 12.5px;
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.overlay-time {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
+.overlay-note label {
+  font-size: 10.5px;
   color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.overlay-note input {
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
+  color: var(--bone);
+  padding: 7px 9px;
+  font-size: 12.5px;
+}
+.overlay-note input:focus {
+  outline: none;
+  border-color: var(--brass);
+}
+
+.overlay-achievements {
+  color: var(--dim);
+  font-size: 11.5px;
+  font-style: italic;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.overlay-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.overlay-action-btn {
+  flex: 1;
+  background: var(--line);
+  color: var(--bone);
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.overlay-action-btn:hover { filter: brightness(1.2); }
+
+.overlay-action-danger {
+  background: var(--danger);
+  color: #1a0d0b;
 }
 
 .overlay-empty {
@@ -1471,24 +1546,6 @@ body.is-dragging * {
   font-style: italic;
   text-align: center;
   padding: 20px 0;
-}
-
-/* ---------- Overlay test banner ---------- */
-
-.overlay-test-text {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 48px;
-  font-weight: 600;
-  letter-spacing: 4px;
-  color: var(--brass);
-  background: var(--panel);
-  border: 2px solid var(--brass);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
 }
 
 /* ---------- Hotkey edit button ---------- */
@@ -1511,4 +1568,21 @@ body.is-dragging * {
 .hotkey-edit-btn:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+/* ---------- Paused-state indicators ---------- */
+
+.overlay-paused-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--brass);
+  margin-top: 2px;
+}
+
+.running-item-paused {
+  opacity: 0.6;
+}
+.running-item-paused .running-dot {
+  background: var(--dim);
+  animation: none;
 }

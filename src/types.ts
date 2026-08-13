@@ -20,4 +20,7 @@ export type Session = {
   startedAt: number;
   endedAt?: number;
   pid?: number;
+  note?: string;
+  pausedAt?: number; // set while currently paused; cleared on resume/end
+  pausedMs?: number; // accumulated total paused time, excluding any open pause
 };

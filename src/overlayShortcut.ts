@@ -2,16 +2,19 @@ import { register, unregister } from '@tauri-apps/plugin-global-shortcut';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { invoke } from '@tauri-apps/api/core';
 import { getHotkey, toTauriAccelerator } from './hotkeySettings';
-import { hasActiveSessionForPid } from './sessions';
+import { getActiveSessionForPid } from './sessions';
+
+const CONTEXT_KEY = 'launcher-overlay-context';
 
 let currentRegistered: string | null = null;
 
-async function isTrackedAppFocused(): Promise<boolean> {
+async function getFocusedTrackedSession() {
   try {
     const pid = await invoke<number | null>('get_foreground_pid');
-    return pid != null && hasActiveSessionForPid(pid);
+    if (pid == null) return null;
+    return getActiveSessionForPid(pid) ?? null;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -32,8 +35,10 @@ export async function toggleOverlay(bypassFocusCheck = false) {
       return;
     }
 
-    if (!bypassFocusCheck && !(await isTrackedAppFocused())) {
-      return; // silently do nothing — the focused app isn't one we're tracking
+    if (!bypassFocusCheck) {
+      const session = await getFocusedTrackedSession();
+      if (!session) return; // silently do nothing — focused app isn't tracked
+      localStorage.setItem(CONTEXT_KEY, JSON.stringify({ appId: session.appId, sessionId: session.id, pid: session.pid }));
     }
 
     await overlay.show();

@@ -15,7 +15,10 @@
   </head>
   <body>
     <div class="overlay-panel" style="-webkit-app-region: no-drag;">
-      <span class="overlay-test-text">TEST</span>
+      <div class="overlay-hint-bar">
+        <span class="overlay-hint">Esc to hide</span>
+      </div>
+      <div id="overlay-body" class="overlay-body"></div>
     </div>
     <script type="module" src="/src/overlay.ts"></script>
   </body>
