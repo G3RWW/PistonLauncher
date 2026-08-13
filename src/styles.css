@@ -1264,3 +1264,73 @@ body.is-dragging * {
   box-shadow: 0 0 6px var(--moss);
   animation: runningPulse 1.4s ease infinite;
 }
+
+/* ---------- Variant 2 tile interaction: hover play overlay + title arrow ---------- */
+
+.tile-cover {
+  position: relative;
+  overflow: hidden;
+}
+
+.play-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(18, 17, 16, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.4px;
+  color: var(--brass);
+  pointer-events: none;
+}
+.tile-cover:hover .play-overlay {
+  opacity: 1;
+}
+
+.tile-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.title-arrow {
+  color: var(--dim);
+  font-size: 10px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.tile-title-row:hover .title-arrow {
+  opacity: 1;
+}
+.tile-title-row:hover .tile-title {
+  color: var(--brass);
+}
+
+/* ---------- Scan modal: category grouping ---------- */
+
+.scan-group-heading {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--brass);
+  padding: 10px 8px 4px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 2px;
+}
+.scan-group-heading:first-child {
+  padding-top: 4px;
+}
+
+.scan-empty {
+  color: var(--dim);
+  font-size: 12px;
+  text-align: center;
+  padding: 20px;
+}

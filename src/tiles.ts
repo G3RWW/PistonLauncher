@@ -1,7 +1,7 @@
 import type { AppEntry } from './types';
 import { setCurrentView, nextTileIndex, resetTileIndex, formatPlaytime, initials } from './state';
 import { totalPlaytimeFor, hasActiveSession } from './sessions';
-import { launchAndTrack, renameApp, editAppPath, refreshIcon, deleteApp, changeCategory } from './actions';
+import { launchAndTrack, renameApp, editAppPath, setCustomIcon, deleteApp, changeCategory } from './actions';
 import { renderView } from './render';
 
 export function closeAllMenus() {
@@ -59,11 +59,11 @@ export function buildTile(app: AppEntry): HTMLDivElement {
     editAppPath(app.id);
   });
 
-  const refreshBtn = document.createElement('button');
-  refreshBtn.textContent = 'Refresh icon';
-  refreshBtn.addEventListener('click', async (e) => {
+  const setIconBtn = document.createElement('button');
+  setIconBtn.textContent = 'Set icon';
+  setIconBtn.addEventListener('click', async (e) => {
     e.stopPropagation();
-    await refreshIcon(app.id);
+    await setCustomIcon(app.id);
   });
 
   const deleteBtn = document.createElement('button');
@@ -74,7 +74,7 @@ export function buildTile(app: AppEntry): HTMLDivElement {
     deleteApp(app.id);
   });
 
-  menu.append(viewBtn, editBtn, editPathBtn, refreshBtn, deleteBtn);
+  menu.append(viewBtn, editBtn, editPathBtn, setIconBtn, deleteBtn);
   menuContainer.append(menuBtn, menu);
 
   // --- Cover / icon ---
@@ -90,19 +90,33 @@ export function buildTile(app: AppEntry): HTMLDivElement {
   }
   cover.addEventListener('click', () => launchAndTrack(app));
 
-  const title = document.createElement('div');
-  title.className = 'tile-title';
-  title.textContent = app.name;
-  title.addEventListener('click', () => {
+  const playOverlay = document.createElement('div');
+  playOverlay.className = 'play-overlay';
+  playOverlay.textContent = '▶ Launch';
+  cover.appendChild(playOverlay);
+
+  const titleRow = document.createElement('div');
+  titleRow.className = 'tile-title-row';
+  titleRow.addEventListener('click', () => {
     setCurrentView({ type: 'app', id: app.id });
     renderView();
   });
+
+  const title = document.createElement('span');
+  title.className = 'tile-title';
+  title.textContent = app.name;
+
+  const titleArrow = document.createElement('span');
+  titleArrow.className = 'title-arrow';
+  titleArrow.textContent = '→';
+
+  titleRow.append(title, titleArrow);
 
   const time = document.createElement('div');
   time.className = 'tile-time';
   time.textContent = formatPlaytime(totalPlaytimeFor(app.id));
 
-  tile.append(menuContainer, cover, title, time);
+  tile.append(menuContainer, cover, titleRow, time);
 
   if (app.launchFailed) {
     tile.classList.add('tile-broken');
@@ -145,6 +159,10 @@ export function patchTileContent(tile: HTMLElement, app: AppEntry) {
     } else {
       coverEl.textContent = initials(app.name);
     }
+    const overlay = document.createElement('div');
+    overlay.className = 'play-overlay';
+    overlay.textContent = '▶ Launch';
+    coverEl.appendChild(overlay);
   }
 
   tile.classList.toggle('tile-broken', !!app.launchFailed);

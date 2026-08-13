@@ -31,29 +31,50 @@ function renderScanModal(list: ScannedApp[]) {
   container.innerHTML = '';
   const existingPaths = new Set(apps.map((a) => a.path));
 
+  const groups = new Map<string, ScannedApp[]>();
   for (const scanned of list) {
-    const row = document.createElement('label');
-    row.className = 'scan-row';
+    const key = scanned.category || 'Uncategorized';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(scanned);
+  }
 
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.checked = selectedScanPaths.has(scanned.path);
-    checkbox.disabled = existingPaths.has(scanned.path);
-    checkbox.addEventListener('change', () => {
-      if (checkbox.checked) selectedScanPaths.add(scanned.path);
-      else selectedScanPaths.delete(scanned.path);
-    });
+  const sortedKeys = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b));
 
-    const label = document.createElement('span');
-    const baseText = existingPaths.has(scanned.path) ? `${scanned.name} (already added)` : scanned.name;
-    label.textContent = baseText;
+  if (sortedKeys.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'scan-empty';
+    empty.textContent = 'No matches.';
+    container.appendChild(empty);
+    return;
+  }
 
-    const categoryTag = document.createElement('span');
-    categoryTag.className = 'scan-row-category';
-    categoryTag.textContent = scanned.category;
+  for (const key of sortedKeys) {
+    const groupApps = groups.get(key)!;
 
-    row.append(checkbox, label, categoryTag);
-    container.appendChild(row);
+    const heading = document.createElement('div');
+    heading.className = 'scan-group-heading';
+    heading.textContent = `${key} (${groupApps.length})`;
+    container.appendChild(heading);
+
+    for (const scanned of groupApps) {
+      const row = document.createElement('label');
+      row.className = 'scan-row';
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = selectedScanPaths.has(scanned.path);
+      checkbox.disabled = existingPaths.has(scanned.path);
+      checkbox.addEventListener('change', () => {
+        if (checkbox.checked) selectedScanPaths.add(scanned.path);
+        else selectedScanPaths.delete(scanned.path);
+      });
+
+      const label = document.createElement('span');
+      label.textContent = existingPaths.has(scanned.path) ? `${scanned.name} (already added)` : scanned.name;
+
+      row.append(checkbox, label);
+      container.appendChild(row);
+    }
   }
 }
 
@@ -88,7 +109,7 @@ document.querySelector<HTMLButtonElement>('#scan-add-btn')!.addEventListener('cl
   }
 
   if (addedNewCategory) {
-    renderView(); // structural: new category section(s) need to exist
+    renderView();
   }
 
   btn.disabled = false;

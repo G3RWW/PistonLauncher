@@ -1,9 +1,10 @@
 import { invoke } from '@tauri-apps/api/core';
+import { open } from '@tauri-apps/plugin-dialog';
+import { readFile } from '@tauri-apps/plugin-fs';
 import type { AppEntry } from './types';
 import { apps, setApps, categories, setCategories, currentView, setCurrentView } from './state';
 import { saveApps, saveCategories } from './storage';
 import { customPrompt, customConfirm, customAlert } from './dialogs';
-import { tryGetIcon } from './icon';
 import { hasActiveSession, startSession, endSession, removeSessionsForApp } from './sessions';
 import { refreshCategorySection, refreshSidebarGroup, refreshRecentSection, refreshAppEverywhere, renderView } from './render';
 
@@ -69,14 +70,74 @@ export async function editAppPath(id: string) {
   }
 }
 
-export async function refreshIcon(id: string) {
+function guessMimeFromExt(path: string): string {
+  const ext = path.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'png':
+      return 'image/png';
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'ico':
+      return 'image/x-icon';
+    case 'bmp':
+      return 'image/bmp';
+    case 'webp':
+      return 'image/webp';
+    default:
+      return 'image/png';
+  }
+}
+
+// Decodes any picked image format and re-encodes it as PNG base64 via
+// canvas, so every stored icon stays consistent regardless of source
+// format — the rest of the app always assumes `data:image/png;base64,...`.
+function bytesToPngBase64(bytes: Uint8Array, mime: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const blob = new Blob([new Uint8Array(bytes)], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth || 64;
+      canvas.height = img.naturalHeight || 64;
+      const ctx = canvas.getContext('2d');
+      URL.revokeObjectURL(url);
+      if (!ctx) {
+        reject(new Error('Canvas context unavailable'));
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/png').split(',')[1]);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Could not decode image'));
+    };
+    img.src = url;
+  });
+}
+
+export async function setCustomIcon(id: string) {
   const app = apps.find((a) => a.id === id);
   if (!app) return;
-  const icon = await tryGetIcon(app.path);
-  if (icon) {
-    app.icon = icon;
+
+  try {
+    const selected = await open({
+      multiple: false,
+      filters: [{ name: 'Image', extensions: ['png', 'jpg', 'jpeg', 'ico', 'bmp', 'webp'] }],
+    });
+    if (!selected || typeof selected !== 'string') return; // user cancelled
+
+    const bytes = await readFile(selected);
+    const pngBase64 = await bytesToPngBase64(bytes, guessMimeFromExt(selected));
+
+    app.icon = pngBase64;
     saveApps(apps);
     refreshAppEverywhere(app);
+  } catch (err) {
+    console.error('Failed to set custom icon:', err);
+    await customAlert('Could not set icon', "That file couldn't be used as an icon.");
   }
 }
 

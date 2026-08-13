@@ -1,50 +1,126 @@
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+use sysinfo::{Pid, System};
 use serde::Serialize;
 use std::collections::HashSet;
+use std::ffi::c_void;
 use walkdir::WalkDir;
+use windows_icons::get_icon_base64_by_path;
+use windows::core::PCWSTR;
+use windows::Win32::Storage::FileSystem::{GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW};
+
+// ============================================================
+// Launch + process tracking
+// ============================================================
+
+#[tauri::command]
+fn launch_app(path: String) -> Result<u32, String> {
+    let child = std::process::Command::new(path)
+        .spawn()
+        .map_err(|e| e.to_string())?;
+    Ok(child.id())
+}
+
+#[tauri::command]
+fn is_running(pid: u32) -> bool {
+    let mut sys = System::new();
+    sys.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
+    sys.process(Pid::from_u32(pid)).is_some()
+}
+
+#[tauri::command]
+fn find_pid_by_name(name: String) -> Option<u32> {
+    let mut sys = System::new();
+    sys.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
+
+    for (pid, process) in sys.processes() {
+        if process.name().to_string_lossy().to_lowercase().contains(&name.to_lowercase()) {
+            return Some(pid.as_u32());
+        }
+    }
+    None
+}
+
+// ============================================================
+// Icon extraction
+// ============================================================
+
+#[tauri::command]
+fn get_app_icon(path: String) -> String {
+    get_icon_base64_by_path(&path)
+}
+
+// ============================================================
+// Vendor detection — reads the exe's own embedded "Company Name"
+// metadata (the same field shown in File Properties -> Details),
+// rather than guessing from names or folders.
+// ============================================================
+
+fn get_company_name(path: &str) -> Option<String> {
+    unsafe {
+        let path_wide: Vec<u16> = path.encode_utf16().chain(std::iter::once(0)).collect();
+        let path_pcwstr = PCWSTR::from_raw(path_wide.as_ptr());
+
+        let size = GetFileVersionInfoSizeW(path_pcwstr, None);
+        if size == 0 {
+            return None;
+        }
+
+        let mut data = vec![0u8; size as usize];
+        let result = GetFileVersionInfoW(path_pcwstr, Some(0), size, data.as_mut_ptr() as *mut c_void);
+        if result.is_err() {
+            return None;
+        }
+
+        // Find which language/codepage this file's string table actually uses.
+        let mut translation_ptr: *mut c_void = std::ptr::null_mut();
+        let mut translation_len: u32 = 0;
+        let query_translation: Vec<u16> = "\\VarFileInfo\\Translation\0".encode_utf16().collect();
+        let result = VerQueryValueW(
+            data.as_ptr() as *const c_void,
+            PCWSTR::from_raw(query_translation.as_ptr()),
+            &mut translation_ptr as *mut _ as *mut *mut c_void,
+            &mut translation_len,
+        );
+        if !result.as_bool() || translation_ptr.is_null() || translation_len < 4 {
+            return None;
+        }
+
+        let lang_codepage = std::slice::from_raw_parts(translation_ptr as *const u16, 2);
+        let query = format!("\\StringFileInfo\\{:04x}{:04x}\\CompanyName\0", lang_codepage[0], lang_codepage[1]);
+        let query_wide: Vec<u16> = query.encode_utf16().collect();
+
+        let mut value_ptr: *mut c_void = std::ptr::null_mut();
+        let mut value_len: u32 = 0;
+        let result = VerQueryValueW(
+            data.as_ptr() as *const c_void,
+            PCWSTR::from_raw(query_wide.as_ptr()),
+            &mut value_ptr as *mut _ as *mut *mut c_void,
+            &mut value_len,
+        );
+        if !result.as_bool() || value_ptr.is_null() || value_len == 0 {
+            return None;
+        }
+
+        let value_slice = std::slice::from_raw_parts(value_ptr as *const u16, (value_len as usize).saturating_sub(1));
+        let company = String::from_utf16_lossy(value_slice).trim().to_string();
+
+        if company.is_empty() { None } else { Some(company) }
+    }
+}
+
+#[tauri::command]
+fn get_exe_vendor(path: String) -> Option<String> {
+    get_company_name(&path)
+}
+
+// ============================================================
+// Start Menu scan
+// ============================================================
 
 #[derive(Serialize)]
 struct ScannedApp {
     name: String,
     path: String,
     category: String,
-}
-
-const KNOWN_VENDOR_PREFIXES: &[&str] = &[
-    "Adobe", "Microsoft", "Google", "Mozilla", "Oracle", "Autodesk",
-    "JetBrains", "Valve", "Epic Games", "Blizzard", "Ubisoft", "EA",
-    "Discord", "Zoom", "Slack", "Spotify", "NVIDIA", "AMD", "Intel",
-    "Corel", "Dropbox", "Steam", "Prusa", "Unity",
-];
-
-// Products whose shortcuts don't mention their vendor at all
-// (e.g. "PowerPoint" instead of "Microsoft PowerPoint").
-const KNOWN_PRODUCTS: &[(&str, &str)] = &[
-    ("onenote", "Microsoft"),
-    ("powerpoint", "Microsoft"),
-    ("outlook", "Microsoft"),
-    ("excel", "Microsoft"),
-    ("access", "Microsoft"),
-    ("publisher", "Microsoft"),
-    ("teams", "Microsoft"),
-    ("skype", "Microsoft"),
-    ("visio", "Microsoft"),
-];
-
-fn guess_vendor_from_name(name: &str) -> Option<String> {
-    let lower = name.to_lowercase();
-
-    for vendor in KNOWN_VENDOR_PREFIXES {
-        if lower.starts_with(&vendor.to_lowercase()) {
-            return Some(vendor.to_string());
-        }
-    }
-    for (product, vendor) in KNOWN_PRODUCTS {
-        if lower.contains(product) {
-            return Some(vendor.to_string());
-        }
-    }
-    None
 }
 
 #[tauri::command]
@@ -82,6 +158,11 @@ fn scan_start_menu() -> Vec<ScannedApp> {
                             .unwrap_or("Unknown")
                             .to_string();
 
+                        // Skip uninstallers — not something you'd add to a launcher
+                        if name.to_lowercase().contains("uninstall") {
+                            continue;
+                        }
+
                         let subfolder = path
                             .strip_prefix(base_path)
                             .ok()
@@ -91,18 +172,15 @@ fn scan_start_menu() -> Vec<ScannedApp> {
                             .filter(|s| !s.is_empty())
                             .map(|s| s.to_string());
 
-                        // A subfolder that just repeats the app's own name isn't a
-                        // useful vendor grouping (e.g. "Oracle VirtualBox\Oracle VirtualBox.lnk")
                         let is_useful_subfolder = subfolder
                             .as_ref()
                             .map(|sf| sf.to_lowercase() != name.to_lowercase())
                             .unwrap_or(false);
 
-                        let category = if is_useful_subfolder {
-                            subfolder.unwrap()
-                        } else {
-                            guess_vendor_from_name(&name).unwrap_or_else(|| "Uncategorized".to_string())
-                        };
+                        // Real embedded vendor metadata always wins over a guessed folder name.
+                        let category = get_company_name(&target)
+                            .or_else(|| if is_useful_subfolder { subfolder.clone() } else { None })
+                            .unwrap_or_else(|| "Uncategorized".to_string());
 
                         results.push(ScannedApp { name, path: target, category });
                     }
@@ -114,50 +192,23 @@ fn scan_start_menu() -> Vec<ScannedApp> {
     results
 }
 
-#[tauri::command]
-fn launch_app(path: String) -> Result<u32, String> {
-    let child = std::process::Command::new(path)
-        .spawn()
-        .map_err(|e| e.to_string())?;
-    Ok(child.id())
-}
-
-use sysinfo::{Pid, System};
-
-#[tauri::command]
-fn is_running(pid: u32) -> bool {
-    let mut sys = System::new();
-    sys.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
-    sys.process(Pid::from_u32(pid)).is_some()
-}
-use windows_icons::get_icon_base64_by_path;
-
-#[tauri::command]
-fn get_app_icon(path: String) -> String {
-    get_icon_base64_by_path(&path)
-}
-
-#[tauri::command]
-fn find_pid_by_name(name: String) -> Option<u32> {
-    let mut sys = System::new();
-    sys.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
-
-    for (pid, process) in sys.processes() {
-        if process.name().to_string_lossy().to_lowercase().contains(&name.to_lowercase()) {
-            return Some(pid.as_u32());
-        }
-    }
-    None
-}
+// ============================================================
+// App entry point
+// ============================================================
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-    .plugin(tauri_plugin_dialog::init())
-    .plugin(tauri_plugin_fs::init())
-    .invoke_handler(tauri::generate_handler![
-        launch_app, is_running, find_pid_by_name, get_app_icon, scan_start_menu
-    ])
-    .run(tauri::generate_context!())
-    .expect("error while running tauri application");
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
+        .invoke_handler(tauri::generate_handler![
+            launch_app,
+            is_running,
+            find_pid_by_name,
+            get_app_icon,
+            scan_start_menu,
+            get_exe_vendor
+        ])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
 }

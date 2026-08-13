@@ -1,3 +1,4 @@
+import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWebview } from '@tauri-apps/api/webview';
 import { categories, setCurrentView } from './state';
 import { saveCategories } from './storage';
@@ -68,13 +69,18 @@ document.querySelector<HTMLButtonElement>('#new-category-btn')!.addEventListener
   }
 });
 
-// ---- Auto-categorization for dragged files (no Start Menu context to
-// draw from, so fall back to the vendor folder inside Program Files) ----
+// ---- Auto-categorization for dragged files: reads the exe's own
+// embedded "Company Name" metadata (same field as File Properties ->
+// Details), rather than guessing from the file path. ----
 
-function guessCategoryFromPath(path: string): string {
-  const match = path.match(/Program Files(?: \(x86\))?\\([^\\]+)\\/i);
-  if (match && match[1]) return match[1];
-  return 'Uncategorized';
+async function detectVendor(path: string): Promise<string> {
+  try {
+    const vendor = await invoke<string | null>('get_exe_vendor', { path });
+    return vendor || 'Uncategorized';
+  } catch (err) {
+    console.warn('Could not read vendor metadata for', path, err);
+    return 'Uncategorized';
+  }
 }
 
 // ---- Drag and drop (OS files) — works app-wide regardless of panel visibility ----
@@ -85,7 +91,7 @@ getCurrentWebview().onDragDropEvent(async (event) => {
     if (filePath.toLowerCase().endsWith('.exe')) {
       const fileName = filePath.split('\\').pop() || filePath.split('/').pop() || 'New App';
       const name = fileName.replace(/\.exe$/i, '');
-      const category = guessCategoryFromPath(filePath);
+      const category = await detectVendor(filePath);
 
       const isNewCategory = !categories.includes(category);
       if (isNewCategory) {
