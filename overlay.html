@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Piston Overlay</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      html, body {
+        background: transparent;
+        margin: 0;
+        height: 100%;
+        -webkit-app-region: drag;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="overlay-panel" style="-webkit-app-region: no-drag;">
+      <span class="overlay-test-text">TEST</span>
+    </div>
+    <script type="module" src="/src/overlay.ts"></script>
+  </body>
+</html>

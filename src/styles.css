@@ -1095,7 +1095,7 @@ body.is-dragging * {
 
 .hotkey-row {
   display: grid;
-  grid-template-columns: 130px 1fr;
+  grid-template-columns: 150px 1fr auto;
   gap: 12px;
   align-items: center;
 }
@@ -1333,4 +1333,182 @@ body.is-dragging * {
   font-size: 12px;
   text-align: center;
   padding: 20px;
+}
+
+/* ---------- Header: Library/Stats nav grouped with menu bar ---------- */
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.header-nav {
+  display: flex;
+  gap: 4px;
+  padding-right: 16px;
+  border-right: 1px solid var(--line);
+}
+
+.header-nav-link {
+  color: var(--dim);
+  text-decoration: none;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  padding: 8px 10px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+.header-nav-link:hover {
+  color: var(--brass);
+  background: var(--panel-raised);
+}
+
+/* ---------- Achievements card (opens overlay) ---------- */
+
+.detail-achievements-card {
+  cursor: pointer;
+  padding: 16px;
+  border: 1px solid var(--line);
+  transition: border-color 0.15s ease;
+}
+.detail-achievements-card:hover {
+  border-color: var(--brass);
+}
+.detail-achievements-card h2 {
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--bone);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+
+.achievements-summary {
+  color: var(--dim);
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* ---------- Overlay window (Ctrl+Shift+O) ---------- */
+
+.overlay-panel {
+  background: var(--panel);
+  border: 1px solid var(--brass);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  padding: 14px;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.overlay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.overlay-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  color: var(--brass);
+  text-transform: uppercase;
+}
+
+.overlay-hint {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9.5px;
+  color: var(--dim);
+}
+
+.overlay-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.overlay-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--panel-raised);
+  padding: 8px 10px;
+}
+
+.overlay-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--moss);
+  flex-shrink: 0;
+}
+
+.overlay-name {
+  color: var(--bone);
+  font-size: 12.5px;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.overlay-time {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--dim);
+}
+
+.overlay-empty {
+  color: var(--dim);
+  font-size: 12px;
+  font-style: italic;
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* ---------- Overlay test banner ---------- */
+
+.overlay-test-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 48px;
+  font-weight: 600;
+  letter-spacing: 4px;
+  color: var(--brass);
+  background: var(--panel);
+  border: 2px solid var(--brass);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* ---------- Hotkey edit button ---------- */
+
+.hotkey-edit-btn {
+  background: var(--line);
+  color: var(--bone);
+  border: none;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+.hotkey-edit-btn:hover:not(:disabled) {
+  filter: brightness(1.2);
+}
+.hotkey-edit-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }

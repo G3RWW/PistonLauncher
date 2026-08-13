@@ -13,6 +13,7 @@ import {
 import { totalPlaytimeFor, totalPlaytimeAll } from './sessions';
 import { buildTile, syncGrid } from './tiles';
 import { renameCategory, deleteCategory, launchAndTrack, editAppPath } from './actions';
+import { openAchievementsModal } from './achievements';
 
 // ============================================================
 // Targeted (partial) DOM updates — only the thing that changed re-renders
@@ -332,19 +333,20 @@ export function renderAppDetail(id: string) {
 
   header.append(iconWrap, info);
 
-  const achievementsSection = document.createElement('div');
-  achievementsSection.className = 'detail-achievements';
+  const achievementsCard = document.createElement('div');
+  achievementsCard.className = 'detail-achievements-card';
+  achievementsCard.addEventListener('click', () => openAchievementsModal(app));
 
   const achHeading = document.createElement('h2');
   achHeading.textContent = 'Achievements';
 
-  const achEmpty = document.createElement('div');
-  achEmpty.className = 'achievements-empty';
-  achEmpty.textContent = 'No achievement set assigned to this app yet.';
+  const achSummary = document.createElement('div');
+  achSummary.className = 'achievements-summary';
+  achSummary.textContent = 'No achievement set assigned yet — click to view';
 
-  achievementsSection.append(achHeading, achEmpty);
+  achievementsCard.append(achHeading, achSummary);
 
-  container.append(backBtn, header, achievementsSection);
+  container.append(backBtn, header, achievementsCard);
 }
 
 // ============================================================

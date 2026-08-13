@@ -10,39 +10,44 @@
       <aside id="sidebar">
         <h1 class="logo">Piston Launcher</h1>
 
-        <a href="#" id="home-link" class="home-link">Library</a>
-        <a href="#" id="stats-link" class="home-link">Stats</a>
-
         <nav id="category-nav"></nav>
       </aside>
 
       <div id="content-area">
         <header id="app-header">
-          <div class="menu-bar">
-            <div class="menu" data-menu="file">
-              <button class="menu-trigger">File</button>
-              <div class="menu-dropdown">
-                <button id="open-add-panel-btn">Add Apps</button>
-                <button id="export-data-btn">Export Data...</button>
-                <button id="import-data-btn">Import Data...</button>
-              </div>
+          <div class="header-left">
+            <div class="header-nav">
+              <a href="#" id="home-link" class="header-nav-link">Library</a>
+              <a href="#" id="stats-link" class="header-nav-link">Stats</a>
             </div>
-            <div class="menu" data-menu="categories">
-              <button class="menu-trigger">Categories</button>
-              <div class="menu-dropdown">
-                <button id="new-category-btn">New Category</button>
+
+            <div class="menu-bar">
+              <div class="menu" data-menu="file">
+                <button class="menu-trigger">File</button>
+                <div class="menu-dropdown">
+                  <button id="open-add-panel-btn">Add Apps</button>
+                  <button id="export-data-btn">Export Data...</button>
+                  <button id="import-data-btn">Import Data...</button>
+                </div>
               </div>
-            </div>
-            <div class="menu" data-menu="view">
-              <button class="menu-trigger">View</button>
-              <div class="menu-dropdown">
-                <button id="theme-btn">Theme</button>
+              <div class="menu" data-menu="categories">
+                <button class="menu-trigger">Categories</button>
+                <div class="menu-dropdown">
+                  <button id="new-category-btn">New Category</button>
+                </div>
               </div>
-            </div>
-            <div class="menu" data-menu="help">
-              <button class="menu-trigger">Help</button>
-              <div class="menu-dropdown">
-                <button id="hotkeys-btn">Keyboard Shortcuts</button>
+              <div class="menu" data-menu="view">
+                <button class="menu-trigger">View</button>
+                <div class="menu-dropdown">
+                  <button id="theme-btn">Theme</button>
+                </div>
+              </div>
+              <div class="menu" data-menu="help">
+                <button class="menu-trigger">Help</button>
+                <div class="menu-dropdown">
+                  <button id="hotkeys-btn">Keyboard Shortcuts</button>
+                  <button id="test-overlay-btn">Test Overlay</button>
+                </div>
               </div>
             </div>
           </div>
@@ -154,6 +159,17 @@
         <div id="hotkeys-list" class="hotkeys-list"></div>
         <div class="modal-actions">
           <button id="hotkeys-close-btn">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Achievements overlay -->
+    <div id="achievements-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2>Achievements</h2>
+        <div id="achievements-modal-body" class="achievements-empty">No achievement set assigned to this app yet.</div>
+        <div class="modal-actions">
+          <button id="achievements-close-btn">Close</button>
         </div>
       </div>
     </div>

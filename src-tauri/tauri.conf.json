@@ -12,15 +12,30 @@
   "app": {
     "withGlobalTauri": true,
     "windows": [
-      {
-        "title": "piston",
-        "width": 1280,
-        "height": 820,
-        "minWidth": 900,
-        "minHeight": 600,
-        "dragDropEnabled": true
-      }
-    ],
+        {
+          "label": "main",
+          "title": "piston",
+          "width": 1280,
+          "height": 820,
+          "minWidth": 900,
+          "minHeight": 600,
+          "dragDropEnabled": true
+        },
+        {
+          "label": "overlay",
+          "title": "overlay",
+          "url": "overlay.html",
+          "width": 420,
+          "height": 260,
+          "decorations": false,
+          "transparent": true,
+          "alwaysOnTop": true,
+          "skipTaskbar": true,
+          "visible": false,
+          "resizable": false,
+          "center": true
+        }
+      ],
     "security": {
       "csp": null
     }

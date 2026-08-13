@@ -19,4 +19,5 @@ export type Session = {
   appId: string;
   startedAt: number;
   endedAt?: number;
+  pid?: number;
 };

@@ -5,7 +5,7 @@ import type { AppEntry } from './types';
 import { apps, setApps, categories, setCategories, currentView, setCurrentView } from './state';
 import { saveApps, saveCategories } from './storage';
 import { customPrompt, customConfirm, customAlert } from './dialogs';
-import { hasActiveSession, startSession, endSession, removeSessionsForApp } from './sessions';
+import { sessions, hasActiveSession, startSession, endSession, removeSessionsForApp } from './sessions';
 import { refreshCategorySection, refreshSidebarGroup, refreshRecentSection, refreshAppEverywhere, renderView } from './render';
 
 export function upsertApp(entry: { name: string; path: string; category: string; icon?: string }) {
@@ -181,6 +181,20 @@ export async function deleteCategory(name: string) {
   renderView(); // structural: category set itself changed
 }
 
+// Polls a PID until it exits, then closes the session and refreshes the UI.
+// Shared by launchAndTrack (fresh launches) and reconcileOrphanedSessions
+// (resuming a session that was still active when the window last reloaded).
+function monitorProcess(pid: number, sessionId: string, app: AppEntry) {
+  const interval = setInterval(async () => {
+    const running = await invoke<boolean>('is_running', { pid });
+    if (!running) {
+      clearInterval(interval);
+      endSession(sessionId);
+      refreshAppEverywhere(app);
+    }
+  }, 1500);
+}
+
 export async function launchAndTrack(app: AppEntry) {
   // Duplicate-launch guard: an "active session" (no endedAt yet) means
   // our poller believes this app is still running.
@@ -191,21 +205,14 @@ export async function launchAndTrack(app: AppEntry) {
 
   try {
     const pid = await invoke<number>('launch_app', { path: app.path });
-    const session = startSession(app.id);
+    const session = startSession(app.id, pid);
 
     app.lastPlayed = Date.now();
     app.launchFailed = false;
     saveApps(apps);
     refreshAppEverywhere(app);
 
-    const interval = setInterval(async () => {
-      const running = await invoke<boolean>('is_running', { pid });
-      if (!running) {
-        clearInterval(interval);
-        endSession(session.id);
-        refreshAppEverywhere(app);
-      }
-    }, 1500);
+    monitorProcess(pid, session.id, app);
   } catch (err) {
     console.error(`Launch failed for ${app.name}:`, err);
     app.launchFailed = true;
@@ -215,5 +222,34 @@ export async function launchAndTrack(app: AppEntry) {
       'Launch failed',
       `Couldn't start "${app.name}". The file may have been moved or uninstalled — use "Edit path" to fix it.`
     );
+  }
+}
+
+// Runs once on startup. If a window reload happened while an app was still
+// running, its session's poller died without ever recording an end time —
+// leaving it "running" forever. This re-checks each such session against
+// reality: resume tracking it if the process is genuinely still alive,
+// otherwise close it out now rather than let it grow indefinitely.
+export async function reconcileOrphanedSessions() {
+  const orphaned = sessions.filter((s) => !s.endedAt);
+
+  for (const session of orphaned) {
+    const app = apps.find((a) => a.id === session.appId);
+    if (!app) {
+      endSession(session.id);
+      continue;
+    }
+
+    if (session.pid) {
+      const stillRunning = await invoke<boolean>('is_running', { pid: session.pid }).catch(() => false);
+      if (stillRunning) {
+        monitorProcess(session.pid, session.id, app);
+        continue;
+      }
+    }
+
+    // No pid on record (an older session), or the process is confirmed gone.
+    endSession(session.id);
+    refreshAppEverywhere(app);
   }
 }

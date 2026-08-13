@@ -1,6 +1,7 @@
 import type { AppEntry } from './types';
 import { apps } from './state';
 import { launchAndTrack } from './actions';
+import { getHotkey, matchesHotkey } from './hotkeySettings';
 
 let filtered: AppEntry[] = [];
 let selectedIndex = 0;
@@ -55,7 +56,7 @@ function updateSelectionHighlight() {
 }
 
 document.addEventListener('keydown', (e) => {
-  if (e.ctrlKey && e.code === 'Space') {
+  if (matchesHotkey(e, getHotkey('quickLaunch'))) {
     e.preventDefault();
     isOpen() ? closeQuickLaunch() : openQuickLaunch();
   }

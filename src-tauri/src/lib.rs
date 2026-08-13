@@ -6,6 +6,7 @@ use walkdir::WalkDir;
 use windows_icons::get_icon_base64_by_path;
 use windows::core::PCWSTR;
 use windows::Win32::Storage::FileSystem::{GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW};
+use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId};
 
 // ============================================================
 // Launch + process tracking
@@ -193,6 +194,24 @@ fn scan_start_menu() -> Vec<ScannedApp> {
 }
 
 // ============================================================
+// Foreground window detection — used to gate the overlay so it
+// only opens when a tracked, launched app currently has focus.
+// ============================================================
+
+#[tauri::command]
+fn get_foreground_pid() -> Option<u32> {
+    unsafe {
+        let hwnd = GetForegroundWindow();
+        if hwnd.0.is_null() {
+            return None;
+        }
+        let mut pid: u32 = 0;
+        GetWindowThreadProcessId(hwnd, Some(&mut pid));
+        if pid == 0 { None } else { Some(pid) }
+    }
+}
+
+// ============================================================
 // App entry point
 // ============================================================
 
@@ -201,13 +220,15 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             launch_app,
             is_running,
             find_pid_by_name,
             get_app_icon,
             scan_start_menu,
-            get_exe_vendor
+            get_exe_vendor,
+            get_foreground_pid
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

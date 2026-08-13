@@ -23,8 +23,12 @@ export function hasActiveSession(appId: string): boolean {
   return sessions.some((s) => s.appId === appId && !s.endedAt);
 }
 
-export function startSession(appId: string): Session {
-  const session: Session = { id: crypto.randomUUID(), appId, startedAt: Date.now() };
+export function hasActiveSessionForPid(pid: number): boolean {
+  return sessions.some((s) => s.pid === pid && !s.endedAt);
+}
+
+export function startSession(appId: string, pid?: number): Session {
+  const session: Session = { id: crypto.randomUUID(), appId, startedAt: Date.now(), pid };
   sessions.push(session);
   saveSessions(sessions);
   return session;
