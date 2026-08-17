@@ -69,7 +69,7 @@ Installers land in `src-tauri/target/release/bundle/` (`nsis/` for the `.exe` in
 | `↑` / `↓` | Move selection in quick launch |
 | `Enter` | Launch selected app / confirm a dialog |
 
-(Also available in-app and changer under **Help → Keyboard Shortcuts**.)
+(Also available in-app and changed under **Help → Keyboard Shortcuts**.)
 
 ## Tech stack
 
