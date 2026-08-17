@@ -1,10 +1,12 @@
-import { register, unregister } from '@tauri-apps/plugin-global-shortcut';
+import { register, unregister, isRegistered } from '@tauri-apps/plugin-global-shortcut';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { PhysicalPosition, PhysicalSize } from '@tauri-apps/api/dpi';
 import { invoke } from '@tauri-apps/api/core';
 import { getHotkey, toTauriAccelerator } from './hotkeySettings';
 import { getActiveSessionForPid } from './sessions';
 
 const CONTEXT_KEY = 'launcher-overlay-context';
+const ESCAPE_ACCEL = 'Escape';
 
 let currentRegistered: string | null = null;
 
@@ -15,6 +17,51 @@ async function getFocusedTrackedSession() {
     return getActiveSessionForPid(pid) ?? null;
   } catch {
     return null;
+  }
+}
+
+// Reads the tracked app's current on-screen bounds and matches the
+// overlay window to them. Called once on open, and repeatedly by
+// overlay.ts's live-tracking loop while the overlay stays visible.
+export async function matchOverlayToWindow(overlay: WebviewWindow, pid: number) {
+  try {
+    const rect = await invoke<[number, number, number, number] | null>('get_window_rect_for_pid', { pid });
+    if (!rect) return;
+    const [x, y, width, height] = rect;
+    await overlay.setPosition(new PhysicalPosition(x, y));
+    await overlay.setSize(new PhysicalSize(width, height));
+  } catch (err) {
+    console.error('Failed to match overlay to window:', err);
+  }
+}
+
+// The overlay's own DOM keydown listener isn't reliable here, since the
+// live position/size syncing means it can't be sure it holds OS keyboard
+// focus. Registering Escape as a genuine global shortcut — only while the
+// overlay is visible — makes closing it work regardless of focus.
+async function registerEscapeToClose() {
+  try {
+    if (!(await isRegistered(ESCAPE_ACCEL))) {
+      await register(ESCAPE_ACCEL, async (event) => {
+        if (event.state === 'Pressed') {
+          const overlay = await WebviewWindow.getByLabel('overlay');
+          await overlay?.hide();
+          await unregisterEscapeToClose();
+        }
+      });
+    }
+  } catch (err) {
+    console.error('Failed to register Escape-to-close:', err);
+  }
+}
+
+async function unregisterEscapeToClose() {
+  try {
+    if (await isRegistered(ESCAPE_ACCEL)) {
+      await unregister(ESCAPE_ACCEL);
+    }
+  } catch {
+    // ignore — nothing to clean up
   }
 }
 
@@ -32,17 +79,29 @@ export async function toggleOverlay(bypassFocusCheck = false) {
     const visible = await overlay.isVisible();
     if (visible) {
       await overlay.hide();
+      await unregisterEscapeToClose();
       return;
     }
 
+    let pid: number | undefined;
     if (!bypassFocusCheck) {
       const session = await getFocusedTrackedSession();
       if (!session) return; // silently do nothing — focused app isn't tracked
+      pid = session.pid;
       localStorage.setItem(CONTEXT_KEY, JSON.stringify({ appId: session.appId, sessionId: session.id, pid: session.pid }));
     }
 
     await overlay.show();
     await overlay.setFocus();
+    if (pid) {
+      await matchOverlayToWindow(overlay, pid);
+      // Some WebView2 versions only recompute transparency on an actual
+      // pixel-value size change after the window is visible — force one.
+      const size = await overlay.outerSize();
+      await overlay.setSize(new PhysicalSize(size.width - 1, size.height));
+      await overlay.setSize(new PhysicalSize(size.width, size.height));
+    }
+    await registerEscapeToClose();
   } catch (err) {
     console.error('Failed to toggle overlay:', err);
   }
@@ -66,11 +125,3 @@ export async function updateOverlayShortcut(combo: string) {
   });
   currentRegistered = accel;
 }
-
-updateOverlayShortcut(getHotkey('overlay')).catch((err) => {
-  console.error('Failed to register overlay shortcut:', err);
-});
-
-document.querySelector<HTMLButtonElement>('#test-overlay-btn')!.addEventListener('click', () => {
-  toggleOverlay(true);
-});

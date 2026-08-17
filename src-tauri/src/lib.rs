@@ -5,8 +5,13 @@ use std::ffi::c_void;
 use walkdir::WalkDir;
 use windows_icons::get_icon_base64_by_path;
 use windows::core::PCWSTR;
+use windows::core::BOOL;
+use windows::Win32::Foundation::{HWND, LPARAM, RECT};
 use windows::Win32::Storage::FileSystem::{GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW};
-use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId};
+use windows::Win32::UI::WindowsAndMessaging::{
+    GetForegroundWindow, GetWindowThreadProcessId, EnumWindows, IsWindowVisible,
+    GetWindowTextLengthW, GetWindowRect,
+};
 
 // ============================================================
 // Launch + process tracking
@@ -212,6 +217,42 @@ fn get_foreground_pid() -> Option<u32> {
 }
 
 // ============================================================
+// Window bounds lookup — used to size/position the overlay to
+// match the tracked app's actual on-screen window, live.
+// ============================================================
+
+struct EnumData {
+    target_pid: u32,
+    found_hwnd: Option<HWND>,
+}
+
+unsafe extern "system" fn enum_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
+    let data = &mut *(lparam.0 as *mut EnumData);
+    let mut pid: u32 = 0;
+    GetWindowThreadProcessId(hwnd, Some(&mut pid));
+    if pid == data.target_pid && IsWindowVisible(hwnd).as_bool() && GetWindowTextLengthW(hwnd) > 0 {
+        data.found_hwnd = Some(hwnd);
+        return BOOL(0); // found it — stop enumerating
+    }
+    BOOL(1) // keep looking
+}
+
+#[tauri::command]
+fn get_window_rect_for_pid(pid: u32) -> Option<(i32, i32, i32, i32)> {
+    unsafe {
+        let mut data = EnumData { target_pid: pid, found_hwnd: None };
+        let _ = EnumWindows(Some(enum_proc), LPARAM(&mut data as *mut _ as isize));
+        let hwnd = data.found_hwnd?;
+
+        let mut rect = RECT::default();
+        if GetWindowRect(hwnd, &mut rect).is_err() {
+            return None;
+        }
+        Some((rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top))
+    }
+}
+
+// ============================================================
 // App entry point
 // ============================================================
 
@@ -228,7 +269,8 @@ pub fn run() {
             get_app_icon,
             scan_start_menu,
             get_exe_vendor,
-            get_foreground_pid
+            get_foreground_pid,
+            get_window_rect_for_pid
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

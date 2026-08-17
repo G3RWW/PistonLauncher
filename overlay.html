@@ -9,16 +9,20 @@
         background: transparent;
         margin: 0;
         height: 100%;
-        -webkit-app-region: drag;
+        overflow: hidden;
       }
     </style>
   </head>
   <body>
-    <div class="overlay-panel" style="-webkit-app-region: no-drag;">
+    <div class="overlay-shell">
       <div class="overlay-hint-bar">
+        <div class="overlay-panels-control">
+          <button id="overlay-add-panel-btn" class="overlay-hint-btn">+ Panels</button>
+          <div id="overlay-panels-menu" class="overlay-panels-menu hidden"></div>
+        </div>
         <span class="overlay-hint">Esc to hide</span>
       </div>
-      <div id="overlay-body" class="overlay-body"></div>
+      <div id="overlay-canvas" class="overlay-canvas"></div>
     </div>
     <script type="module" src="/src/overlay.ts"></script>
   </body>

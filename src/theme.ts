@@ -1,94 +1,35 @@
 import { open } from '@tauri-apps/plugin-dialog';
 import { readTextFile } from '@tauri-apps/plugin-fs';
 import { customPrompt, customConfirm } from './dialogs';
-
-import blueprintCss from './themes/blueprint.css?raw';
-import steamCss from './themes/steam.css?raw';
-import midnightCss from './themes/midnight.css?raw';
-
-type CustomTheme = { id: string; name: string; css: string };
-type ActiveThemeRef = { kind: 'builtin'; name: string } | { kind: 'custom'; id: string };
-
-const ACTIVE_THEME_REF_KEY = 'launcher-active-theme-ref';
-const CUSTOM_THEMES_KEY = 'launcher-custom-themes';
-
-const BUILTIN_THEMES: Record<string, string> = {
-  Blueprint: blueprintCss,
-  Steam: steamCss,
-  Midnight: midnightCss,
-};
-
-function loadCustomThemes(): CustomTheme[] {
-  const raw = localStorage.getItem(CUSTOM_THEMES_KEY);
-  return raw ? JSON.parse(raw) : [];
-}
-function saveCustomThemes(list: CustomTheme[]) {
-  localStorage.setItem(CUSTOM_THEMES_KEY, JSON.stringify(list));
-}
+import {
+  type CustomTheme,
+  type ActiveThemeRef,
+  loadCustomThemes,
+  saveCustomThemes,
+  loadActiveRef,
+  saveActiveRef,
+  applyActiveTheme,
+} from './themeApply';
 
 let customThemes: CustomTheme[] = loadCustomThemes();
-
-function loadActiveRef(): ActiveThemeRef {
-  const raw = localStorage.getItem(ACTIVE_THEME_REF_KEY);
-  if (raw) {
-    try {
-      return JSON.parse(raw);
-    } catch {
-      /* fall through to default */
-    }
-  }
-  return { kind: 'builtin', name: 'Blueprint' };
-}
-function saveActiveRef(ref: ActiveThemeRef) {
-  localStorage.setItem(ACTIVE_THEME_REF_KEY, JSON.stringify(ref));
-}
-
 let activeRef: ActiveThemeRef = loadActiveRef();
 
-function getThemeStyleTag(): HTMLStyleElement {
-  let tag = document.querySelector<HTMLStyleElement>('#active-theme-css');
-  if (!tag) {
-    tag = document.createElement('style');
-    tag.id = 'active-theme-css';
-    document.head.appendChild(tag); // appended last -> wins ties with the base stylesheet
-  }
-  return tag;
-}
-
-function resolveTheme(ref: ActiveThemeRef): { css: string; name: string } | null {
-  if (ref.kind === 'builtin') {
-    const css = BUILTIN_THEMES[ref.name];
-    return css ? { css, name: ref.name } : null;
-  }
-  const custom = customThemes.find((t) => t.id === ref.id);
-  return custom ? { css: custom.css, name: custom.name } : null;
-}
-
-function applyActiveTheme() {
-  let resolved = resolveTheme(activeRef);
-  if (!resolved) {
-    // Referenced theme no longer exists (e.g. it was deleted) — fall back safely.
-    activeRef = { kind: 'builtin', name: 'Blueprint' };
-    resolved = resolveTheme(activeRef)!;
-  }
-
-  getThemeStyleTag().textContent = resolved.css;
+function refreshTheme() {
   saveActiveRef(activeRef);
-
+  const name = applyActiveTheme();
   const label = document.querySelector<HTMLElement>('#active-theme-label');
-  if (label) label.textContent = resolved.name;
-
+  if (label && name) label.textContent = name;
   renderThemeModalLists();
 }
 
 function selectBuiltin(name: string) {
   activeRef = { kind: 'builtin', name };
-  applyActiveTheme();
+  refreshTheme();
 }
 
 function selectCustom(id: string) {
   activeRef = { kind: 'custom', id };
-  applyActiveTheme();
+  refreshTheme();
 }
 
 async function addCustomThemeFromFile() {
@@ -108,7 +49,7 @@ async function addCustomThemeFromFile() {
     saveCustomThemes(customThemes);
 
     activeRef = { kind: 'custom', id: theme.id };
-    applyActiveTheme();
+    refreshTheme();
   } catch (err) {
     console.error('Failed to load theme file:', err);
   }
@@ -126,7 +67,7 @@ async function deleteCustomTheme(id: string) {
   if (activeRef.kind === 'custom' && activeRef.id === id) {
     activeRef = { kind: 'builtin', name: 'Blueprint' };
   }
-  applyActiveTheme();
+  refreshTheme();
 }
 
 function renderThemeModalLists() {
@@ -171,7 +112,7 @@ function renderThemeModalLists() {
 }
 
 // Apply the saved theme (or default to Blueprint) on startup.
-applyActiveTheme();
+refreshTheme();
 
 // ---- Theme modal wiring ----
 

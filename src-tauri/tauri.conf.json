@@ -21,20 +21,21 @@
           "minHeight": 600,
           "dragDropEnabled": true
         },
-        {
-          "label": "overlay",
-          "title": "overlay",
-          "url": "overlay.html",
-          "width": 380,
-          "height": 460,
-          "decorations": false,
-          "transparent": true,
-          "alwaysOnTop": true,
-          "skipTaskbar": true,
-          "visible": false,
-          "resizable": false,
-          "center": true
-        }
+       {
+        "label": "overlay",
+        "title": "overlay",
+        "url": "overlay.html",
+        "width": 400,
+        "height": 300,
+        "decorations": false,
+        "transparent": true,
+        "shadow": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "visible": false,
+        "resizable": false,
+        "center": false
+      }
       ],
     "security": {
       "csp": null

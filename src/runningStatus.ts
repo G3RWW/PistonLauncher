@@ -1,6 +1,8 @@
 import { apps, setCurrentView } from './state';
-import { sessions } from './sessions';
+import { sessions, setSessions } from './sessions';
+import { loadSessions } from './storage';
 import { renderView } from './render';
+import { patchTileContent } from './tiles';
 
 function formatElapsed(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -56,5 +58,25 @@ function renderRunningBar() {
   }
 }
 
-renderRunningBar();
-setInterval(renderRunningBar, 1000);
+// The overlay window writes session changes (pause/resume/end) straight
+// to storage, but it's a separate JS context — the main window's cached
+// `sessions` array here never hears about it on its own. Refresh from
+// storage every tick so changes made from the overlay actually show up.
+function syncFromStorage() {
+  setSessions(loadSessions());
+
+  // Also patch any currently-visible tiles so their running-dot and
+  // playtime figures pick up the refreshed data, not just the header bar.
+  document.querySelectorAll<HTMLElement>('.tile[data-app-id]').forEach((tile) => {
+    const app = apps.find((a) => a.id === tile.dataset.appId);
+    if (app) patchTileContent(tile, app);
+  });
+}
+
+function tick() {
+  syncFromStorage();
+  renderRunningBar();
+}
+
+tick();
+setInterval(tick, 1000);
