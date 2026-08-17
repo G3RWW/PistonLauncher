@@ -68,6 +68,22 @@ async function unregisterEscapeToClose() {
 // bypassFocusCheck=true is used by the manual "Test Overlay" button, so it
 // always works regardless of what's currently focused. Real shortcut
 // presses go through the focus check.
+// Hides the overlay if it's visible — unlike toggleOverlay, this can
+// never accidentally SHOW it. Used by the auto-hide-on-switch-away check
+// in overlay.ts, which must never open the overlay, only ever close it.
+export async function hideOverlay() {
+  try {
+    const overlay = await WebviewWindow.getByLabel('overlay');
+    if (!overlay) return;
+    if (await overlay.isVisible()) {
+      await overlay.hide();
+      await unregisterEscapeToClose();
+    }
+  } catch (err) {
+    console.error('Failed to hide overlay:', err);
+  }
+}
+
 export async function toggleOverlay(bypassFocusCheck = false) {
   try {
     const overlay = await WebviewWindow.getByLabel('overlay');

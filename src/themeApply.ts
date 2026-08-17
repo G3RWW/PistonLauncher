@@ -56,13 +56,30 @@ function resolveTheme(ref: ActiveThemeRef, customThemes: CustomTheme[]): { css: 
   return custom ? { css: custom.css, name: custom.name } : null;
 }
 
+// Strips any rule whose selector list targets `body` or `html` from a
+// theme's CSS. Used only when applying a theme to the overlay window,
+// which must never have its background overridden — no matter how a
+// theme (built-in or custom) chooses to style the main window's body.
+// Handles flat rule blocks; doesn't attempt to look inside @media blocks.
+function stripBodyBackgroundRules(css: string): string {
+  return css.replace(/([^{}]+)\{([^{}]*)\}/g, (match, selector: string) => {
+    const targetsBody = selector
+      .split(',')
+      .map((s) => s.trim().toLowerCase())
+      .some((s) => /(^|[\s>+~])(html|body)([\s.:#\[]|$)/.test(s + ' '));
+    return targetsBody ? '' : match;
+  });
+}
+
 // Applies whichever theme is currently saved to storage, to THIS
 // document's style tag. Safe to call from any window — always reads
 // fresh from storage, so calling it repeatedly (e.g. on a timer) also
 // works as a lightweight "pick up theme changes made elsewhere" poll.
+// Pass stripBodyBackground for windows (like the overlay) that must
+// stay transparent regardless of what a theme's CSS otherwise contains.
 // Returns the applied theme's display name, or undefined if unchanged.
 let lastAppliedSignature = '';
-export function applyActiveTheme(): string | undefined {
+export function applyActiveTheme(options?: { stripBodyBackground?: boolean }): string | undefined {
   const ref = loadActiveRef();
   const customThemes = loadCustomThemes();
   let resolved = resolveTheme(ref, customThemes);
@@ -71,10 +88,11 @@ export function applyActiveTheme(): string | undefined {
   }
   if (!resolved) return undefined;
 
-  const signature = ref.kind === 'builtin' ? `builtin:${ref.name}` : `custom:${ref.id}`;
+  const signature = (ref.kind === 'builtin' ? `builtin:${ref.name}` : `custom:${ref.id}`) + (options?.stripBodyBackground ? ':stripped' : '');
   if (signature === lastAppliedSignature) return undefined; // no-op if nothing changed
   lastAppliedSignature = signature;
 
-  getThemeStyleTag().textContent = resolved.css;
+  const css = options?.stripBodyBackground ? stripBodyBackgroundRules(resolved.css) : resolved.css;
+  getThemeStyleTag().textContent = css;
   return resolved.name;
 }

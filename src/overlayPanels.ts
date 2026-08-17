@@ -1,4 +1,4 @@
-export type PanelId = 'spotlight' | 'note' | 'achievements';
+export type PanelId = 'spotlight' | 'note' | 'achievements' | 'quickLaunch' | 'weeklyTrend' | 'dailyGoal';
 
 export type PanelLayout = {
   x: number;
@@ -14,15 +14,31 @@ type PanelLayouts = Record<PanelId, PanelLayout>;
 const LAYOUT_KEY = 'overlay-panel-layout';
 
 const DEFAULT_LAYOUTS: PanelLayouts = {
-  spotlight: { x: 16, y: 16, width: 250, height: 264, minimized: false, closed: false },
-  note: { x: 282, y: 16, width: 240, height: 120, minimized: false, closed: false },
-  achievements: { x: 282, y: 152, width: 240, height: 128, minimized: false, closed: false },
+  spotlight: { x: 40, y: 40, width: 260, height: 320, minimized: false, closed: false },
+  note: { x: 320, y: 40, width: 340, height: 400, minimized: false, closed: false },
+  achievements: { x: 680, y: 40, width: 260, height: 320, minimized: false, closed: false },
+  quickLaunch: { x: 40, y: 380, width: 260, height: 220, minimized: false, closed: true },
+  weeklyTrend: { x: 320, y: 460, width: 340, height: 180, minimized: false, closed: true },
+  dailyGoal: { x: 680, y: 380, width: 260, height: 140, minimized: false, closed: true },
 };
 
 export const PANEL_TITLES: Record<PanelId, string> = {
   spotlight: 'Now Tracking',
   note: 'Note',
   achievements: 'Achievements',
+  quickLaunch: 'Quick Launch',
+  weeklyTrend: 'Weekly Trend',
+  dailyGoal: 'Daily Goal',
+};
+
+// Short label shown on each dock box until real icons are added.
+export const PANEL_DOCK_LABELS: Record<PanelId, string> = {
+  spotlight: 'NT',
+  note: 'NO',
+  achievements: 'AC',
+  quickLaunch: 'QL',
+  weeklyTrend: 'WT',
+  dailyGoal: 'DG',
 };
 
 export function loadPanelLayouts(): PanelLayouts {
@@ -163,20 +179,24 @@ export function createPanel(
   return { el, content };
 }
 
-export function renderPanelsMenu(layouts: PanelLayouts, onToggle: () => void) {
-  const menu = document.querySelector<HTMLDivElement>('#overlay-panels-menu')!;
-  menu.innerHTML = '';
+// Builds the persistent dock row — one box per panel, toggling that
+// panel open/closed on click. Boxes are plain placeholders (a two-letter
+// label) until real per-module icons are added later.
+export function renderDock(layouts: PanelLayouts, onToggle: () => void) {
+  const dock = document.querySelector<HTMLDivElement>('#overlay-dock')!;
+  dock.innerHTML = '';
 
   (Object.keys(layouts) as PanelId[]).forEach((id) => {
-    const item = document.createElement('button');
-    item.className = 'overlay-panels-menu-item';
-    const isClosed = layouts[id].closed;
-    item.textContent = `${isClosed ? '☐' : '☑'} ${PANEL_TITLES[id]}`;
-    item.addEventListener('click', () => {
+    const box = document.createElement('button');
+    box.className = 'overlay-dock-box' + (layouts[id].closed ? '' : ' active');
+    box.title = PANEL_TITLES[id];
+    box.dataset.panelId = id;
+    box.textContent = PANEL_DOCK_LABELS[id];
+    box.addEventListener('click', () => {
       layouts[id].closed = !layouts[id].closed;
       savePanelLayouts(layouts);
       onToggle();
     });
-    menu.appendChild(item);
+    dock.appendChild(box);
   });
 }

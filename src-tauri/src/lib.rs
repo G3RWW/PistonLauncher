@@ -216,6 +216,15 @@ fn get_foreground_pid() -> Option<u32> {
     }
 }
 
+// Piston's own process id — the main window and the overlay window run
+// in the same process, so comparing the foreground pid against this one
+// tells us "the launcher or overlay itself has focus," distinct from
+// "the tracked app has focus" or "the user switched to something else."
+#[tauri::command]
+fn get_current_pid() -> u32 {
+    std::process::id()
+}
+
 // ============================================================
 // Window bounds lookup — used to size/position the overlay to
 // match the tracked app's actual on-screen window, live.
@@ -270,6 +279,7 @@ pub fn run() {
             scan_start_menu,
             get_exe_vendor,
             get_foreground_pid,
+            get_current_pid,
             get_window_rect_for_pid
         ])
         .run(tauri::generate_context!())
