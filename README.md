@@ -1,8 +1,10 @@
 # Piston Launcher
 
-A personal desktop app launcher — think Steam, but for your everyday work and creative software. Organize your apps into categories, track how much time you actually spend in each one, and launch everything from one place.
+A personal desktop app launcher — Steam like app for your everyday work and creative software. Organize your apps into categories, track how much time you actually spend in each one, make use of overlay and launch everything from one place.
 
-Built with [Tauri](https://tauri.app) (Rust + a lightweight native webview), so it stays small and fast without bundling a full browser.
+Built with [Tauri](https://tauri.app) (Rust + a lightweight native webview2).
+
+App is created using AI (ClaudeAI)
 
 ## Features
 
@@ -20,6 +22,7 @@ Built with [Tauri](https://tauri.app) (Rust + a lightweight native webview), so 
 - **Themes** — three built-in themes (Blueprint, Steam, Midnight), plus support for fully custom themes: load any `.css` file from disk, and it's saved to a reselectable, deletable list.
 - **Export/Import** — back up all your apps, categories, and playtime history to a JSON file, or restore from one.
 - **Custom dialogs throughout** — no native browser popups; everything is styled to match the app.
+- **Overlay** - still wip
 
 ## Installing
 
@@ -56,16 +59,17 @@ Installers land in `src-tauri/target/release/bundle/` (`nsis/` for the `.exe` in
 - **Switch themes** via **View → Theme**.
 - **Back up your data** via **File → Export Data**, and restore it via **Import Data**.
 
-### Keyboard shortcuts
+### Keyboard shortcuts 
 
 | Keys | Action |
 |---|---|
 | `Ctrl + Space` | Open quick launch |
 | `Esc` | Close quick launch, a dialog, or an open menu |
+| `Ctrl+Alt+Shift+O` | Open overlay |
 | `↑` / `↓` | Move selection in quick launch |
 | `Enter` | Launch selected app / confirm a dialog |
 
-(Also available in-app under **Help → Keyboard Shortcuts**.)
+(Also available in-app and changed under **Help → Keyboard Shortcuts**.)
 
 ## Tech stack
 
