@@ -1,4 +1,4 @@
-export type PanelId = 'spotlight' | 'note' | 'achievements' | 'quickLaunch' | 'weeklyTrend' | 'dailyGoal';
+export type PanelId = 'spotlight' | 'note' | 'achievements' | 'quickLaunch' | 'weeklyTrend' | 'dailyGoal' | 'pomodoro' | 'reminders';
 
 export type PanelLayout = {
   x: number;
@@ -18,8 +18,10 @@ const DEFAULT_LAYOUTS: PanelLayouts = {
   note: { x: 320, y: 40, width: 340, height: 400, minimized: false, closed: false },
   achievements: { x: 680, y: 40, width: 260, height: 320, minimized: false, closed: false },
   quickLaunch: { x: 40, y: 380, width: 260, height: 220, minimized: false, closed: true },
-  weeklyTrend: { x: 320, y: 460, width: 340, height: 180, minimized: false, closed: true },
+  weeklyTrend: { x: 320, y: 460, width: 340, height: 210, minimized: false, closed: true },
   dailyGoal: { x: 680, y: 380, width: 260, height: 140, minimized: false, closed: true },
+  pomodoro: { x: 960, y: 40, width: 220, height: 280, minimized: false, closed: true },
+  reminders: { x: 960, y: 340, width: 220, height: 260, minimized: false, closed: true },
 };
 
 export const PANEL_TITLES: Record<PanelId, string> = {
@@ -29,6 +31,8 @@ export const PANEL_TITLES: Record<PanelId, string> = {
   quickLaunch: 'Quick Launch',
   weeklyTrend: 'Weekly Trend',
   dailyGoal: 'Daily Goal',
+  pomodoro: 'Focus Timer',
+  reminders: 'Reminders',
 };
 
 // Short label shown on each dock box until real icons are added.
@@ -39,6 +43,8 @@ export const PANEL_DOCK_LABELS: Record<PanelId, string> = {
   quickLaunch: 'QL',
   weeklyTrend: 'WT',
   dailyGoal: 'DG',
+  pomodoro: 'PM',
+  reminders: 'RM',
 };
 
 export function loadPanelLayouts(): PanelLayouts {
@@ -182,7 +188,7 @@ export function createPanel(
 // Builds the persistent dock row — one box per panel, toggling that
 // panel open/closed on click. Boxes are plain placeholders (a two-letter
 // label) until real per-module icons are added later.
-export function renderDock(layouts: PanelLayouts, onToggle: () => void) {
+export function renderDock(layouts: PanelLayouts, onToggle: (id: PanelId) => void) {
   const dock = document.querySelector<HTMLDivElement>('#overlay-dock')!;
   dock.innerHTML = '';
 
@@ -195,7 +201,7 @@ export function renderDock(layouts: PanelLayouts, onToggle: () => void) {
     box.addEventListener('click', () => {
       layouts[id].closed = !layouts[id].closed;
       savePanelLayouts(layouts);
-      onToggle();
+      onToggle(id);
     });
     dock.appendChild(box);
   });

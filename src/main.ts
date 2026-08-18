@@ -8,6 +8,7 @@ import './scan';
 import './backup';
 import './quickLaunch';
 import './hotkeys';
+import './about';
 import './runningStatus';
 import './modalBehavior';
 

@@ -2,7 +2,7 @@ import { register, unregister, isRegistered } from '@tauri-apps/plugin-global-sh
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { PhysicalPosition, PhysicalSize } from '@tauri-apps/api/dpi';
 import { invoke } from '@tauri-apps/api/core';
-import { getHotkey, toTauriAccelerator } from './hotkeySettings';
+import { toTauriAccelerator } from './hotkeySettings';
 import { getActiveSessionForPid } from './sessions';
 
 const CONTEXT_KEY = 'launcher-overlay-context';

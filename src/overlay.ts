@@ -97,6 +97,63 @@ function saveDailyGoals(goals: Record<string, number>) {
   localStorage.setItem(DAILY_GOAL_KEY, JSON.stringify(goals));
 }
 
+type WeeklyTrendSettings = { weekStart: 'sunday' | 'monday'; metric: 'time' | 'sessions' };
+const WEEKLY_TREND_SETTINGS_KEY = 'overlay-weekly-trend-settings';
+
+function loadWeeklyTrendSettings(): WeeklyTrendSettings {
+  const raw = localStorage.getItem(WEEKLY_TREND_SETTINGS_KEY);
+  if (raw) {
+    try {
+      return { weekStart: 'monday', metric: 'time', ...JSON.parse(raw) };
+    } catch {
+      /* fall through */
+    }
+  }
+  return { weekStart: 'monday', metric: 'time' };
+}
+function saveWeeklyTrendSettings(s: WeeklyTrendSettings) {
+  localStorage.setItem(WEEKLY_TREND_SETTINGS_KEY, JSON.stringify(s));
+}
+
+function sessionCountForDayWindow(sessions: Session[], appId: string, dayStart: number, dayEnd: number): number {
+  return sessions.filter((s) => s.appId === appId && s.startedAt >= dayStart && s.startedAt < dayEnd).length;
+}
+
+type PomodoroState = {
+  mode: 'idle' | 'work' | 'break';
+  endsAt: number | null; // when the current running phase ends
+  pausedRemainingMs: number | null; // remaining ms, if paused mid-phase
+  workMin: number;
+  breakMin: number;
+};
+const POMODORO_KEY = 'overlay-pomodoro-state';
+
+function loadPomodoro(): PomodoroState {
+  const raw = localStorage.getItem(POMODORO_KEY);
+  if (raw) {
+    try {
+      return { mode: 'idle', endsAt: null, pausedRemainingMs: null, workMin: 25, breakMin: 5, ...JSON.parse(raw) };
+    } catch {
+      /* fall through */
+    }
+  }
+  return { mode: 'idle', endsAt: null, pausedRemainingMs: null, workMin: 25, breakMin: 5 };
+}
+function savePomodoro(s: PomodoroState) {
+  localStorage.setItem(POMODORO_KEY, JSON.stringify(s));
+}
+
+type Reminder = { id: string; label: string; intervalMin: number; lastFiredAt: number };
+const REMINDERS_KEY = 'overlay-reminders';
+
+function loadReminders(): Reminder[] {
+  const raw = localStorage.getItem(REMINDERS_KEY);
+  return raw ? JSON.parse(raw) : [];
+}
+function saveReminders(list: Reminder[]) {
+  localStorage.setItem(REMINDERS_KEY, JSON.stringify(list));
+}
+
 // ---------------------------------------------------------------------
 // Actions
 // ---------------------------------------------------------------------
@@ -308,41 +365,94 @@ function buildQuickLaunchContent(content: HTMLDivElement, app: AppEntry) {
 
 function buildWeeklyTrendContent(content: HTMLDivElement, sessions: Session[], appId: string) {
   content.innerHTML = '';
+
+  const header = document.createElement('div');
+  header.className = 'overlay-panel-settings-header';
+  const gearBtn = document.createElement('button');
+  gearBtn.className = 'overlay-gear-btn';
+  gearBtn.textContent = '⚙';
+  gearBtn.title = 'Settings';
+  header.appendChild(gearBtn);
+
+  const settingsRow = document.createElement('div');
+  settingsRow.className = 'overlay-panel-settings-row hidden';
+
+  const weekStartSelect = document.createElement('select');
+  weekStartSelect.className = 'overlay-settings-select';
+  weekStartSelect.innerHTML = `<option value="monday">Week starts Mon</option><option value="sunday">Week starts Sun</option>`;
+
+  const metricSelect = document.createElement('select');
+  metricSelect.className = 'overlay-settings-select';
+  metricSelect.innerHTML = `<option value="time">Show: Time</option><option value="sessions">Show: Sessions</option>`;
+
+  settingsRow.append(weekStartSelect, metricSelect);
+  gearBtn.addEventListener('click', () => settingsRow.classList.toggle('hidden'));
+
   const bars = document.createElement('div');
   bars.className = 'overlay-sparkline';
 
-  const days: { label: string; sec: number }[] = [];
-  const today = new Date();
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    d.setHours(0, 0, 0, 0);
-    const dayStart = d.getTime();
-    const dayEnd = dayStart + 24 * 60 * 60 * 1000;
-    days.push({ label: d.toLocaleDateString(undefined, { weekday: 'narrow' }), sec: totalPlaytimeForDayWindow(sessions, appId, dayStart, dayEnd) });
+  function renderBars() {
+    const settings = loadWeeklyTrendSettings();
+    weekStartSelect.value = settings.weekStart;
+    metricSelect.value = settings.metric;
+
+    // Anchor to the current calendar week's start (not a rolling 7-day
+    // window), per the chosen start day. Days later than today just
+    // show as empty/zero, since they haven't happened yet.
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dow = today.getDay(); // 0=Sun..6=Sat
+    const offset = settings.weekStart === 'monday' ? (dow === 0 ? 6 : dow - 1) : dow;
+    const weekStartDate = new Date(today);
+    weekStartDate.setDate(weekStartDate.getDate() - offset);
+
+    const days: { label: string; value: number; isTime: boolean }[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(weekStartDate);
+      d.setDate(d.getDate() + i);
+      const dayStart = d.getTime();
+      const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+      const value =
+        settings.metric === 'time'
+          ? totalPlaytimeForDayWindow(sessions, appId, dayStart, dayEnd)
+          : sessionCountForDayWindow(sessions, appId, dayStart, dayEnd);
+      days.push({ label: d.toLocaleDateString(undefined, { weekday: 'narrow' }), value, isTime: settings.metric === 'time' });
+    }
+
+    bars.innerHTML = '';
+    const max = Math.max(...days.map((d) => d.value), settings.metric === 'time' ? 60 : 1);
+    for (const day of days) {
+      const col = document.createElement('div');
+      col.className = 'overlay-sparkline-col';
+
+      const barTrack = document.createElement('div');
+      barTrack.className = 'overlay-sparkline-track';
+      const bar = document.createElement('div');
+      bar.className = 'overlay-sparkline-bar';
+      bar.style.height = `${Math.max(4, (day.value / max) * 100)}%`;
+      bar.title = day.isTime ? formatPlaytime(day.value) : `${day.value} session${day.value === 1 ? '' : 's'}`;
+      barTrack.appendChild(bar);
+
+      const label = document.createElement('span');
+      label.className = 'overlay-sparkline-label';
+      label.textContent = day.label;
+
+      col.append(barTrack, label);
+      bars.appendChild(col);
+    }
   }
 
-  const max = Math.max(...days.map((d) => d.sec), 60);
-  for (const day of days) {
-    const col = document.createElement('div');
-    col.className = 'overlay-sparkline-col';
+  weekStartSelect.addEventListener('change', () => {
+    saveWeeklyTrendSettings({ ...loadWeeklyTrendSettings(), weekStart: weekStartSelect.value as 'sunday' | 'monday' });
+    renderBars();
+  });
+  metricSelect.addEventListener('change', () => {
+    saveWeeklyTrendSettings({ ...loadWeeklyTrendSettings(), metric: metricSelect.value as 'time' | 'sessions' });
+    renderBars();
+  });
 
-    const barTrack = document.createElement('div');
-    barTrack.className = 'overlay-sparkline-track';
-    const bar = document.createElement('div');
-    bar.className = 'overlay-sparkline-bar';
-    bar.style.height = `${Math.max(4, (day.sec / max) * 100)}%`;
-    bar.title = formatPlaytime(day.sec);
-    barTrack.appendChild(bar);
-
-    const label = document.createElement('span');
-    label.className = 'overlay-sparkline-label';
-    label.textContent = day.label;
-
-    col.append(barTrack, label);
-    bars.appendChild(col);
-  }
-  content.appendChild(bars);
+  renderBars();
+  content.append(header, settingsRow, bars);
 }
 
 function buildDailyGoalContent(content: HTMLDivElement, appId: string) {
@@ -381,13 +491,235 @@ function buildDailyGoalContent(content: HTMLDivElement, appId: string) {
   content.append(row, track, label);
 }
 
+function formatCountdown(ms: number): string {
+  const totalSec = Math.max(0, Math.ceil(ms / 1000));
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function buildPomodoroContent(content: HTMLDivElement) {
+  content.innerHTML = '';
+
+  const display = document.createElement('div');
+  display.id = 'overlay-pomodoro-display';
+  display.className = 'overlay-pomodoro-display';
+
+  const modeLabel = document.createElement('div');
+  modeLabel.id = 'overlay-pomodoro-mode';
+  modeLabel.className = 'overlay-pomodoro-mode';
+
+  const settingsRow = document.createElement('div');
+  settingsRow.className = 'overlay-pomodoro-settings';
+
+  const workInput = document.createElement('input');
+  workInput.type = 'number';
+  workInput.min = '1';
+  workInput.className = 'overlay-goal-input';
+  const workLabel = document.createElement('label');
+  workLabel.textContent = 'Work (min)';
+  workLabel.appendChild(workInput);
+
+  const breakInput = document.createElement('input');
+  breakInput.type = 'number';
+  breakInput.min = '1';
+  breakInput.className = 'overlay-goal-input';
+  const breakLabel = document.createElement('label');
+  breakLabel.textContent = 'Break (min)';
+  breakLabel.appendChild(breakInput);
+
+  settingsRow.append(workLabel, breakLabel);
+
+  function persistSettings() {
+    const s = loadPomodoro();
+    s.workMin = Math.max(1, parseInt(workInput.value, 10) || 25);
+    s.breakMin = Math.max(1, parseInt(breakInput.value, 10) || 5);
+    savePomodoro(s);
+  }
+  workInput.addEventListener('change', persistSettings);
+  breakInput.addEventListener('change', persistSettings);
+
+  const actions = document.createElement('div');
+  actions.className = 'overlay-actions';
+
+  const startBtn = document.createElement('button');
+  startBtn.className = 'overlay-action-btn';
+  startBtn.id = 'overlay-pomodoro-start';
+
+  const resetBtn = document.createElement('button');
+  resetBtn.className = 'overlay-action-btn overlay-action-danger';
+  resetBtn.textContent = 'Reset';
+  resetBtn.addEventListener('click', () => {
+    savePomodoro({ ...loadPomodoro(), mode: 'idle', endsAt: null, pausedRemainingMs: null });
+    refreshPomodoroUI();
+  });
+
+  startBtn.addEventListener('click', () => {
+    const s = loadPomodoro();
+    if (s.mode === 'idle') {
+      savePomodoro({ ...s, mode: 'work', endsAt: Date.now() + s.workMin * 60000, pausedRemainingMs: null });
+    } else if (s.pausedRemainingMs != null) {
+      savePomodoro({ ...s, endsAt: Date.now() + s.pausedRemainingMs, pausedRemainingMs: null });
+    } else if (s.endsAt != null) {
+      savePomodoro({ ...s, pausedRemainingMs: Math.max(0, s.endsAt - Date.now()), endsAt: null });
+    }
+    refreshPomodoroUI();
+  });
+
+  actions.append(startBtn, resetBtn);
+
+  function refreshPomodoroUI() {
+    const s = loadPomodoro();
+    workInput.value = String(s.workMin);
+    breakInput.value = String(s.breakMin);
+
+    if (s.mode === 'idle') {
+      modeLabel.textContent = 'Ready';
+      display.textContent = formatCountdown(s.workMin * 60000);
+      startBtn.textContent = 'Start';
+    } else {
+      modeLabel.textContent = s.mode === 'work' ? '🎯 Focus' : '☕ Break';
+      const remaining = s.pausedRemainingMs ?? Math.max(0, (s.endsAt ?? Date.now()) - Date.now());
+      display.textContent = formatCountdown(remaining);
+      startBtn.textContent = s.pausedRemainingMs != null ? 'Resume' : s.endsAt != null ? 'Pause' : 'Start';
+    }
+  }
+
+  content.append(modeLabel, display, settingsRow, actions);
+  refreshPomodoroUI();
+}
+
+function buildRemindersContent(content: HTMLDivElement) {
+  content.innerHTML = '';
+
+  const addRow = document.createElement('div');
+  addRow.className = 'overlay-reminder-add-row';
+  const labelInput = document.createElement('input');
+  labelInput.type = 'text';
+  labelInput.placeholder = 'e.g. Stretch';
+  labelInput.className = 'overlay-goal-input';
+  const intervalInput = document.createElement('input');
+  intervalInput.type = 'number';
+  intervalInput.min = '1';
+  intervalInput.placeholder = 'min';
+  intervalInput.className = 'overlay-goal-input overlay-reminder-interval-input';
+  const addBtn = document.createElement('button');
+  addBtn.className = 'overlay-action-btn';
+  addBtn.textContent = 'Add';
+  addBtn.addEventListener('click', () => {
+    const label = labelInput.value.trim();
+    const intervalMin = Math.max(1, parseInt(intervalInput.value, 10) || 0);
+    if (!label || !intervalMin) return;
+    const list = loadReminders();
+    list.push({ id: crypto.randomUUID(), label, intervalMin, lastFiredAt: Date.now() });
+    saveReminders(list);
+    labelInput.value = '';
+    intervalInput.value = '';
+    renderList();
+  });
+  addRow.append(labelInput, intervalInput, addBtn);
+
+  const list = document.createElement('div');
+  list.className = 'overlay-reminder-list';
+
+  function renderList() {
+    list.innerHTML = '';
+    const reminders = loadReminders();
+    if (reminders.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'overlay-empty-small';
+      empty.textContent = 'No reminders yet.';
+      list.appendChild(empty);
+      return;
+    }
+    for (const r of reminders) {
+      const row = document.createElement('div');
+      row.className = 'overlay-reminder-row';
+      row.dataset.reminderId = r.id;
+
+      const text = document.createElement('span');
+      text.className = 'overlay-reminder-text';
+      text.textContent = r.label;
+
+      const countdown = document.createElement('span');
+      countdown.className = 'overlay-reminder-countdown';
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'overlay-widget-btn';
+      removeBtn.textContent = '✕';
+      removeBtn.addEventListener('click', () => {
+        saveReminders(loadReminders().filter((x) => x.id !== r.id));
+        renderList();
+      });
+
+      row.append(text, countdown, removeBtn);
+      list.appendChild(row);
+    }
+  }
+
+  renderList();
+  content.append(addRow, list);
+}
+
 // ---------------------------------------------------------------------
-// Canvas / panel orchestration
+// Canvas / panel orchestration — mounts/unmounts individual panels as
+// their layout's closed-state changes, rather than tearing down the
+// whole canvas on every toggle. A full rebuild only happens when the
+// tracked app/session itself changes (see render()), since that's the
+// one case where every panel's content genuinely needs fresh data.
 // ---------------------------------------------------------------------
 
+const mountedPanels: Partial<Record<PanelId, HTMLDivElement>> = {};
+
+function panelBuilders(): Record<PanelId, (content: HTMLDivElement) => void> {
+  return {
+    spotlight: (content) => buildSpotlightContent(content, currentApp!, currentSession!),
+    note: (content) => buildNoteContent(content, currentSession!),
+    achievements: (content) => buildAchievementsContent(content),
+    quickLaunch: (content) => buildQuickLaunchContent(content, currentApp!),
+    weeklyTrend: (content) => buildWeeklyTrendContent(content, loadSessions(), currentApp!.id),
+    dailyGoal: (content) => buildDailyGoalContent(content, currentApp!.id),
+    pomodoro: (content) => buildPomodoroContent(content),
+    reminders: (content) => buildRemindersContent(content),
+  };
+}
+
+function mountPanel(id: PanelId) {
+  if (mountedPanels[id]) return; // already mounted — don't rebuild it
+  const layouts = loadPanelLayouts();
+  const panel = createPanel(id, layouts, () => unmountPanel(id));
+  if (!panel) return;
+  panelBuilders()[id](panel.content);
+  document.querySelector<HTMLDivElement>('#overlay-canvas')!.appendChild(panel.el);
+  mountedPanels[id] = panel.el;
+}
+
+function unmountPanel(id: PanelId) {
+  mountedPanels[id]?.remove();
+  delete mountedPanels[id];
+}
+
+// Reconciles which panels are mounted against the saved layout — mounts
+// any that should now be open, unmounts any that should now be closed.
+// This is what dock clicks call: it only ever touches the ONE panel
+// whose state actually changed.
+function syncPanelsToLayout() {
+  const layouts = loadPanelLayouts();
+  (Object.keys(layouts) as PanelId[]).forEach((id) => {
+    const shouldBeOpen = !layouts[id].closed;
+    const isMounted = !!mountedPanels[id];
+    if (shouldBeOpen && !isMounted) mountPanel(id);
+    else if (!shouldBeOpen && isMounted) unmountPanel(id);
+  });
+}
+
+// Full teardown + remount of every open panel — used only when the
+// tracked app/session changes, since every panel's content depends on
+// which app is currently focused.
 function rebuildCanvas() {
   const canvas = document.querySelector<HTMLDivElement>('#overlay-canvas')!;
   canvas.innerHTML = '';
+  for (const id of Object.keys(mountedPanels) as PanelId[]) delete mountedPanels[id];
 
   if (!currentApp || !currentSession) {
     const empty = document.createElement('div');
@@ -397,22 +729,7 @@ function rebuildCanvas() {
     return;
   }
 
-  const layouts = loadPanelLayouts();
-  const builders: Record<PanelId, (content: HTMLDivElement) => void> = {
-    spotlight: (content) => buildSpotlightContent(content, currentApp!, currentSession!),
-    note: (content) => buildNoteContent(content, currentSession!),
-    achievements: (content) => buildAchievementsContent(content),
-    quickLaunch: (content) => buildQuickLaunchContent(content, currentApp!),
-    weeklyTrend: (content) => buildWeeklyTrendContent(content, loadSessions(), currentApp!.id),
-    dailyGoal: (content) => buildDailyGoalContent(content, currentApp!.id),
-  };
-
-  (Object.keys(builders) as PanelId[]).forEach((id) => {
-    const panel = createPanel(id, layouts, () => rebuildCanvas());
-    if (!panel) return;
-    builders[id](panel.content);
-    canvas.appendChild(panel.el);
-  });
+  syncPanelsToLayout();
 }
 
 function updateLiveStats() {
@@ -447,6 +764,66 @@ function updateLiveStats() {
     goalFill.style.width = `${pct}%`;
     goalLabel.textContent = goalMin > 0 ? `${Math.round(todaySec / 60)} / ${goalMin} min today` : 'Set a daily goal above';
   }
+
+  tickPomodoro();
+  tickReminders();
+}
+
+function tickPomodoro() {
+  const display = document.querySelector<HTMLElement>('#overlay-pomodoro-display');
+  if (!display) return; // panel not mounted
+
+  const s = loadPomodoro();
+  if (s.mode !== 'idle' && s.endsAt != null && Date.now() >= s.endsAt) {
+    // Phase finished — auto-switch to the other one.
+    const nextMode = s.mode === 'work' ? 'break' : 'work';
+    const nextMin = nextMode === 'work' ? s.workMin : s.breakMin;
+    savePomodoro({ ...s, mode: nextMode, endsAt: Date.now() + nextMin * 60000, pausedRemainingMs: null });
+  }
+
+  const fresh = loadPomodoro();
+  const modeLabel = document.querySelector<HTMLElement>('#overlay-pomodoro-mode');
+  const startBtn = document.querySelector<HTMLButtonElement>('#overlay-pomodoro-start');
+  if (fresh.mode === 'idle') {
+    if (modeLabel) modeLabel.textContent = 'Ready';
+    display.textContent = formatCountdown(fresh.workMin * 60000);
+    if (startBtn) startBtn.textContent = 'Start';
+  } else {
+    if (modeLabel) modeLabel.textContent = fresh.mode === 'work' ? '🎯 Focus' : '☕ Break';
+    const remaining = fresh.pausedRemainingMs ?? Math.max(0, (fresh.endsAt ?? Date.now()) - Date.now());
+    display.textContent = formatCountdown(remaining);
+    if (startBtn) startBtn.textContent = fresh.pausedRemainingMs != null ? 'Resume' : fresh.endsAt != null ? 'Pause' : 'Start';
+  }
+}
+
+function tickReminders() {
+  const list = document.querySelector<HTMLElement>('.overlay-reminder-list');
+  if (!list) return; // panel not mounted
+
+  const reminders = loadReminders();
+  const now = Date.now();
+  let changed = false;
+
+  for (const r of reminders) {
+    const intervalMs = r.intervalMin * 60000;
+    const elapsed = now - r.lastFiredAt;
+    const row = list.querySelector<HTMLElement>(`[data-reminder-id="${r.id}"]`);
+    const countdownEl = row?.querySelector<HTMLElement>('.overlay-reminder-countdown');
+
+    if (elapsed >= intervalMs) {
+      r.lastFiredAt = now;
+      changed = true;
+      row?.classList.add('overlay-reminder-fired');
+      setTimeout(() => row?.classList.remove('overlay-reminder-fired'), 3000);
+    }
+
+    if (countdownEl) {
+      const remaining = Math.max(0, intervalMs - (now - r.lastFiredAt));
+      countdownEl.textContent = formatCountdown(remaining);
+    }
+  }
+
+  if (changed) saveReminders(reminders);
 }
 
 function render() {
@@ -477,7 +854,7 @@ setInterval(render, 1000);
 
 function refreshDock() {
   renderDock(loadPanelLayouts(), () => {
-    rebuildCanvas();
+    syncPanelsToLayout();
     refreshDock();
   });
 }
