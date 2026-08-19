@@ -16,7 +16,7 @@ async function renderAboutBody() {
 
   const desc = document.createElement('p');
   desc.className = 'about-description';
-  desc.textContent = 'A Steam-style launcher for tracking time spent in your everyday work apps.';
+  desc.textContent = 'Launcher for tracking time spent in your everyday work apps with course and habit tracking.';
 
   body.append(title, versionEl, desc);
 }

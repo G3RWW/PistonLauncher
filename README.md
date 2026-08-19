@@ -1,6 +1,6 @@
 # Piston Launcher
 
-A personal desktop app launcher — Steam like app for your everyday work and creative software. Organize your apps into categories, track how much time you actually spend in each one, make use of overlay and launch everything from one place.
+A personal desktop app launcher — App for your everyday work and creative software. Organize your apps into categories, track how much time you actually spend in each one, make use of overlay and launch everything from one place.
 
 Built with [Tauri](https://tauri.app) (Rust + a lightweight native webview2).
 
@@ -21,8 +21,14 @@ App is created using AI (ClaudeAI)
 - **Quick launch** — `Ctrl+Space` anywhere opens a searchable, keyboard-navigable launcher.
 - **Themes** — three built-in themes (Blueprint, Steam, Midnight), plus support for fully custom themes: load any `.css` file from disk, and it's saved to a reselectable, deletable list.
 - **Export/Import** — back up all your apps, categories, and playtime history to a JSON file, or restore from one.
-- **Custom dialogs throughout** — no native browser popups; everything is styled to match the app.
-- **Overlay** - still wip
+- **Overlay** - launch overlay over your app to:
+  - Control your current tracking (pause or stop it)
+  - Write session notes to safe text for temporary
+  - Qucik Launch apps from same category (as example qucikly launch adobe iliustrator along side adobe after effects)
+  - Check weekly trend to see how much you use app per week 
+  - Set and follow your daily goal of how long you want to work in your selected app or projecet
+  - With focus timer set time for work and brakes
+  - Set reminder to for drinking water, stretching or other things. 
 
 ## Installing
 
@@ -79,5 +85,7 @@ Installers land in `src-tauri/target/release/bundle/` (`nsis/` for the `.exe` in
 
 ## Roadmap
 
-- Achievement sets tied to individual apps (data model and detail-page UI are already in place, ready for this)
 - Per-session history views (daily/weekly breakdowns)
+- Habit page (duolingo style streak system)
+- Course overlay and page for personal learning along custom course system
+- Online fucntion for teacher - student system in course page 
