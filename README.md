@@ -35,6 +35,12 @@ App is created using AI (ClaudeAI)
 
 Grab the latest installer from the [Releases](../../releases) page and run it. It's an unsigned build, so Windows SmartScreen will show a warning on first run — click **More info → Run anyway**.
 
+## Updating
+
+Grab the latest installer from the [Releases](../../releases) page and run it over your
+existing install — no need to uninstall first. Your apps, sessions, and habit streak are
+stored locally and aren't touched by the installer, so they'll carry over automatically.
+
 ## Building from source
 
 **Prerequisites:**
