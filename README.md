@@ -1,14 +1,14 @@
 # Piston Launcher
 
-A personal desktop app launcher — App for your everyday work and creative software. Organize your apps into categories, track how much time you actually spend in each one, make use of overlay and launch everything from one place.
+A personal desktop app launcher for your everyday work and creative software. Organize your apps into categories, track how much time you actually spend in each one, and launch everything from one place — with an overlay you can keep on top of whatever you're working in.
 
-Built with [Tauri](https://tauri.app) (Rust + a lightweight native webview2).
+Built with [Tauri](https://tauri.app) (Rust + a lightweight native WebView2).
 
-App is created using AI (ClaudeAI)
+App is created using AI (Claude AI).
 
 ## Features
 
-- **Launch tracking** — every launch is logged as a real session (start/end), giving you accurate per-app and total playtime, viewable in the Stats page.
+- **Launch tracking** — every launch is logged as a real session (start/end), giving you accurate per-app and total playtime, viewable on the Stats page.
 - **Categories** — drag and drop tiles between categories, or let auto-categorization group newly added apps by vendor automatically.
 - **Add apps three ways**:
   - Drag a `.exe` straight onto the window
@@ -19,17 +19,18 @@ App is created using AI (ClaudeAI)
 - **Duplicate-launch guard** — won't spawn a second process if an app is already open.
 - **Broken-path detection** — flags an app if its last launch failed (e.g. moved or uninstalled), with a one-click path fix.
 - **Quick launch** — `Ctrl+Space` anywhere opens a searchable, keyboard-navigable launcher.
-- **Themes** — three built-in themes (Blueprint, Steam, Midnight), plus support for fully custom themes: load any `.css` file from disk, and it's saved to a reselectable, deletable list.
+- **Themes** — three built-in themes (Blueprint, Steam, Midnight), plus support for fully custom themes: load any `.css` file from disk, saved to a reselectable, deletable list.
 - **Export/Import** — back up all your apps, categories, and playtime history to a JSON file, or restore from one.
-- **Habit** - Duolingo style streaks for selected app 
-- **Overlay** - launch overlay over your app to:
-  - Control your current tracking (pause or stop it)
-  - Write session notes to safe text for temporary
-  - Qucik Launch apps from same category (as example qucikly launch adobe iliustrator along side adobe after effects)
-  - Check weekly trend to see how much you use app per week 
-  - Set and follow your daily goal of how long you want to work in your selected app or projecet
-  - With focus timer set time for work and brakes
-  - Set reminder to for drinking water, stretching or other things. 
+- **Habit** — Duolingo-style daily streak tracking for one app of your choosing, with a dedicated page showing your current streak, best streak, and a 12-week activity heatmap.
+- **Overlay** — a floating panel over your app to:
+  - Control your current tracking session (pause or stop it)
+  - Write freeform session notes that save automatically
+  - Quick-launch other apps from the same category (e.g. jump straight from Adobe Illustrator to Adobe After Effects)
+  - Check your weekly trend to see how much you use the app per week
+  - Set and follow a daily goal for how long you want to work in a given app or project
+  - Run a focus timer with configurable work/break intervals
+  - Set reminders for drinking water, stretching, or anything else
+  - See your Habit streak at a glance, no matter which app you're currently tracking
 
 ## Installing
 
@@ -68,11 +69,12 @@ Installers land in `src-tauri/target/release/bundle/` (`nsis/` for the `.exe` in
 - **Launch** an app by clicking its icon; click its name instead to open a detail page with stats.
 - **Reorganize** by dragging a tile into a different category section.
 - **Manage categories** via the **Categories** menu, or rename/delete one from its heading in the library.
-- **Check usage** anytime from the **Stats** link in the sidebar.
+- **Check usage** anytime from the **Stats** link in the header.
+- **Track a habit** from the **Habit** link, or by setting an app as your habit from its detail page.
 - **Switch themes** via **View → Theme**.
 - **Back up your data** via **File → Export Data**, and restore it via **Import Data**.
 
-### Keyboard shortcuts 
+### Keyboard shortcuts
 
 | Keys | Action |
 |---|---|
@@ -82,7 +84,7 @@ Installers land in `src-tauri/target/release/bundle/` (`nsis/` for the `.exe` in
 | `↑` / `↓` | Move selection in quick launch |
 | `Enter` | Launch selected app / confirm a dialog |
 
-(Also available in-app and changed under **Help → Keyboard Shortcuts**.)
+(Also available in-app and changeable under **Help → Keyboard Shortcuts**.)
 
 ## Tech stack
 
@@ -92,7 +94,7 @@ Installers land in `src-tauri/target/release/bundle/` (`nsis/` for the `.exe` in
 
 ## Roadmap
 
-- Per-session history views (daily/weekly breakdowns)
-- Habit page (duolingo style streak system)
-- Course overlay and page for personal learning along custom course system
-- Online fucntion for teacher - student system in course page 
+- Streak freezes for the Habit system (protect a streak against one missed day)
+- Support for multiple habit apps, each with its own streak
+- Course overlay and page for personal learning, with a custom course system
+- Online teacher–student functionality within the course page
