@@ -6,7 +6,7 @@ import { apps, setApps, categories, setCategories, currentView, setCurrentView }
 import { saveApps, saveCategories } from './storage';
 import { customPrompt, customConfirm, customAlert } from './dialogs';
 import { sessions, hasActiveSession, startSession, endSession, removeSessionsForApp } from './sessions';
-import { refreshCategorySection, refreshSidebarGroup, refreshRecentSection, refreshAppEverywhere, renderView } from './render';
+import { refreshCategorySection, refreshSidebarGroup, refreshRecentSection, refreshAppEverywhere, renderView, renderLibrary, renderSidebarNav } from './render';
 
 export function upsertApp(entry: { name: string; path: string; category: string; icon?: string }) {
   const existing = apps.find((a) => a.path === entry.path);
@@ -40,6 +40,11 @@ export async function deleteApp(id: string) {
   if (currentView.type === 'app' && currentView.id === id) {
     setCurrentView({ type: 'library' });
     renderView(); // structural: switching away from a page that no longer exists
+  } else if (category === 'Uncategorized') {
+    // Deleting the last Uncategorized app may hide that section entirely.
+    renderLibrary();
+    renderSidebarNav();
+    refreshRecentSection();
   } else {
     refreshCategorySection(category);
     refreshSidebarGroup(category);

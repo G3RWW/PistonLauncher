@@ -1,7 +1,6 @@
 import type { AppEntry } from './types';
 import {
   apps,
-  categories,
   libraryCollapsed,
   sidebarCollapsed,
   currentView,
@@ -9,11 +8,13 @@ import {
   resetTileIndex,
   formatPlaytime,
   initials,
+  visibleCategories,
 } from './state';
-import { totalPlaytimeFor, totalPlaytimeAll } from './sessions';
+import { totalPlaytimeFor, totalPlaytimeAll, sessions, effectiveDurationSec } from './sessions';
 import { buildTile, syncGrid } from './tiles';
 import { renameCategory, deleteCategory, launchAndTrack, editAppPath } from './actions';
 import { openAchievementsModal } from './achievements';
+import { groupSessionsByPeriod, colorForIndex, type PeriodGrouping } from './statsHelpers';
 
 // ============================================================
 // Targeted (partial) DOM updates — only the thing that changed re-renders
@@ -87,12 +88,23 @@ export function refreshSidebarGroup(category: string) {
 // section(s), the recent shelf, the sidebar group(s), and the detail
 // page if that app happens to be open — nothing else re-renders.
 export function refreshAppEverywhere(app: AppEntry, previousCategory?: string) {
-  if (previousCategory && previousCategory !== app.category) {
-    refreshCategorySection(previousCategory);
-    refreshSidebarGroup(previousCategory);
+  const categoryChanged = !!previousCategory && previousCategory !== app.category;
+  const uncategorizedInvolved = previousCategory === 'Uncategorized' || app.category === 'Uncategorized';
+
+  if (categoryChanged && uncategorizedInvolved) {
+    // "Uncategorized" may have just become empty (hide it) or non-empty
+    // (show it) — that's a structural change to which sections exist, so
+    // a full rebuild of the library + sidebar is the simplest safe path.
+    renderLibrary();
+    renderSidebarNav();
+  } else {
+    if (categoryChanged) {
+      refreshCategorySection(previousCategory!);
+      refreshSidebarGroup(previousCategory!);
+    }
+    refreshCategorySection(app.category);
+    refreshSidebarGroup(app.category);
   }
-  refreshCategorySection(app.category);
-  refreshSidebarGroup(app.category);
   refreshRecentSection();
   if (currentView.type === 'app' && currentView.id === app.id) {
     renderAppDetail(app.id);
@@ -107,7 +119,7 @@ export function renderSidebarNav() {
   const nav = document.querySelector<HTMLElement>('#category-nav')!;
   nav.innerHTML = '';
 
-  for (const category of categories) {
+  for (const category of visibleCategories()) {
     const catApps = apps.filter((a) => a.category === category);
 
     const group = document.createElement('div');
@@ -176,7 +188,7 @@ export function renderLibrary() {
   const library = document.querySelector<HTMLDivElement>('#library')!;
   library.innerHTML = '';
 
-  for (const category of categories) {
+  for (const category of visibleCategories()) {
     const section = document.createElement('div');
     section.className = 'category-section';
     section.id = `cat-${category}`;
@@ -346,12 +358,326 @@ export function renderAppDetail(id: string) {
 
   achievementsCard.append(achHeading, achSummary);
 
-  container.append(backBtn, header, achievementsCard);
+  const sessionsCard = document.createElement('div');
+  sessionsCard.className = 'detail-sessions-card';
+
+  const sessHeading = document.createElement('h2');
+  sessHeading.textContent = 'Session History';
+
+  const tabs = document.createElement('div');
+  tabs.className = 'session-period-tabs';
+
+  const historyBody = document.createElement('div');
+  historyBody.className = 'session-history-body';
+
+  (['week', 'month', 'year'] as PeriodGrouping[]).forEach((grouping) => {
+    const tab = document.createElement('button');
+    tab.className = 'session-period-tab' + (appDetailGrouping === grouping ? ' active' : '');
+    tab.textContent = grouping[0].toUpperCase() + grouping.slice(1);
+    tab.addEventListener('click', () => {
+      if (appDetailGrouping === grouping) return;
+      appDetailGrouping = grouping;
+      tabs.querySelectorAll('.session-period-tab').forEach((el) => el.classList.remove('active'));
+      tab.classList.add('active');
+      renderSessionHistory(historyBody, app.id, grouping);
+    });
+    tabs.appendChild(tab);
+  });
+
+  sessHeading.appendChild(tabs);
+  renderSessionHistory(historyBody, app.id, appDetailGrouping);
+  sessionsCard.append(sessHeading, historyBody);
+
+  container.append(backBtn, header, achievementsCard, sessionsCard);
+}
+
+// Which grouping the Session History tabs are on — kept at module scope
+// so it stays put while switching between apps/pages within one run.
+let appDetailGrouping: PeriodGrouping = 'week';
+
+function renderSessionHistory(body: HTMLDivElement, appId: string, grouping: PeriodGrouping) {
+  body.innerHTML = '';
+
+  const appSessions = sessions.filter((s) => s.appId === appId).sort((a, b) => b.startedAt - a.startedAt);
+  if (appSessions.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'achievements-empty';
+    empty.textContent = 'No sessions recorded yet — launch this app to start tracking.';
+    body.appendChild(empty);
+    return;
+  }
+
+  const groups = groupSessionsByPeriod(appSessions, grouping);
+  for (const group of groups) {
+    const groupEl = document.createElement('div');
+    groupEl.className = 'session-group';
+
+    const groupHeader = document.createElement('div');
+    groupHeader.className = 'session-group-header';
+    const groupLabel = document.createElement('span');
+    groupLabel.textContent = group.label;
+    const groupTotal = document.createElement('span');
+    groupTotal.className = 'session-group-total';
+    groupTotal.textContent = formatPlaytime(group.totalSec);
+    groupHeader.append(groupLabel, groupTotal);
+    groupEl.appendChild(groupHeader);
+
+    const sortedSessions = [...group.sessions].sort((a, b) => b.startedAt - a.startedAt);
+    for (const session of sortedSessions) {
+      const row = document.createElement('div');
+      row.className = 'session-row';
+
+      const dateEl = document.createElement('div');
+      dateEl.className = 'session-row-date';
+      const start = new Date(session.startedAt);
+      const dateStr = start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      const timeStr = start.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+      dateEl.textContent = `${dateStr} · ${timeStr}`;
+      if (!session.endedAt) {
+        const liveTag = document.createElement('span');
+        liveTag.className = 'session-row-live';
+        liveTag.textContent = 'running';
+        dateEl.appendChild(liveTag);
+      }
+
+      const durationEl = document.createElement('div');
+      durationEl.className = 'session-row-duration';
+      durationEl.textContent = formatPlaytime(effectiveDurationSec(session, session.endedAt ?? Date.now()));
+
+      row.append(dateEl, durationEl);
+      groupEl.appendChild(row);
+    }
+
+    body.appendChild(groupEl);
+  }
 }
 
 // ============================================================
-// Stats view — total + per-app playtime breakdown
+// Stats view — overall breakdown chart + per-category playtime lists
 // ============================================================
+
+let statsChartMode: 'category' | 'app' = 'category';
+
+type ChartSlice = { label: string; seconds: number; color: string; appId?: string };
+
+function buildDonutChart(slices: ChartSlice[], totalSec: number): SVGSVGElement {
+  const size = 180;
+  const r = 70;
+  const stroke = 26;
+  const c = 2 * Math.PI * r;
+  const svgNS = 'http://www.w3.org/2000/svg';
+
+  const svg = document.createElementNS(svgNS, 'svg') as SVGSVGElement;
+  svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+  svg.setAttribute('width', String(size));
+  svg.setAttribute('height', String(size));
+  svg.classList.add('stats-donut');
+
+  const bg = document.createElementNS(svgNS, 'circle');
+  bg.setAttribute('cx', String(size / 2));
+  bg.setAttribute('cy', String(size / 2));
+  bg.setAttribute('r', String(r));
+  bg.setAttribute('fill', 'none');
+  bg.setAttribute('stroke', 'var(--line)');
+  bg.setAttribute('stroke-width', String(stroke));
+  svg.appendChild(bg);
+
+  let offset = 0;
+  for (const slice of slices) {
+    const frac = totalSec > 0 ? slice.seconds / totalSec : 0;
+    if (frac <= 0) continue;
+    const len = frac * c;
+    const circle = document.createElementNS(svgNS, 'circle');
+    circle.setAttribute('cx', String(size / 2));
+    circle.setAttribute('cy', String(size / 2));
+    circle.setAttribute('r', String(r));
+    circle.setAttribute('fill', 'none');
+    circle.setAttribute('stroke', slice.color);
+    circle.setAttribute('stroke-width', String(stroke));
+    circle.setAttribute('stroke-dasharray', `${Math.max(len - 1.5, 0)} ${c - len + 1.5}`);
+    circle.setAttribute('stroke-dashoffset', String(-offset));
+    circle.setAttribute('transform', `rotate(-90 ${size / 2} ${size / 2})`);
+    circle.classList.add('stats-donut-slice');
+
+    const title = document.createElementNS(svgNS, 'title');
+    title.textContent = `${slice.label} — ${formatPlaytime(slice.seconds)} (${Math.round(frac * 100)}%)`;
+    circle.appendChild(title);
+
+    svg.appendChild(circle);
+    offset += len;
+  }
+
+  const centerText = document.createElementNS(svgNS, 'text');
+  centerText.setAttribute('x', String(size / 2));
+  centerText.setAttribute('y', String(size / 2));
+  centerText.setAttribute('text-anchor', 'middle');
+  centerText.setAttribute('dominant-baseline', 'middle');
+  centerText.classList.add('stats-donut-center');
+  centerText.textContent = formatPlaytime(totalSec);
+  svg.appendChild(centerText);
+
+  return svg;
+}
+
+function buildChartSection(): HTMLDivElement {
+  const section = document.createElement('div');
+  section.className = 'stats-chart-section';
+
+  const toggle = document.createElement('div');
+  toggle.className = 'stats-chart-toggle';
+  (['category', 'app'] as const).forEach((mode) => {
+    const btn = document.createElement('button');
+    btn.className = 'stats-chart-toggle-btn' + (statsChartMode === mode ? ' active' : '');
+    btn.textContent = mode === 'category' ? 'By Category' : 'By App';
+    btn.addEventListener('click', () => {
+      if (statsChartMode === mode) return;
+      statsChartMode = mode;
+      renderStats();
+    });
+    toggle.appendChild(btn);
+  });
+
+  const totalAll = totalPlaytimeAll();
+  let slices: ChartSlice[];
+  if (statsChartMode === 'category') {
+    slices = visibleCategories()
+      .map((category, i) => ({
+        label: category,
+        seconds: apps.filter((a) => a.category === category).reduce((sum, a) => sum + totalPlaytimeFor(a.id), 0),
+        color: colorForIndex(i),
+      }))
+      .filter((s) => s.seconds > 0)
+      .sort((a, b) => b.seconds - a.seconds);
+  } else {
+    slices = apps
+      .map((app, i) => ({ label: app.name, seconds: totalPlaytimeFor(app.id), color: colorForIndex(i), appId: app.id }))
+      .filter((s) => s.seconds > 0)
+      .sort((a, b) => b.seconds - a.seconds);
+  }
+
+  const body = document.createElement('div');
+  body.className = 'stats-chart-body';
+
+  if (slices.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'achievements-empty';
+    empty.textContent = 'No tracked playtime yet — launch something first.';
+    body.appendChild(empty);
+  } else {
+    body.appendChild(buildDonutChart(slices, totalAll));
+
+    const legend = document.createElement('div');
+    legend.className = 'stats-chart-legend';
+    for (const slice of slices) {
+      const item = document.createElement('div');
+      item.className = 'stats-legend-item';
+      if (slice.appId) {
+        item.classList.add('clickable');
+        const appId = slice.appId;
+        item.addEventListener('click', () => {
+          setCurrentView({ type: 'app', id: appId });
+          renderView();
+        });
+      }
+
+      const swatch = document.createElement('span');
+      swatch.className = 'stats-legend-swatch';
+      swatch.style.background = slice.color;
+
+      const label = document.createElement('span');
+      label.className = 'stats-legend-label';
+      label.textContent = slice.label;
+
+      const value = document.createElement('span');
+      value.className = 'stats-legend-value';
+      const pct = totalAll > 0 ? Math.round((slice.seconds / totalAll) * 100) : 0;
+      value.textContent = `${formatPlaytime(slice.seconds)} · ${pct}%`;
+
+      item.append(swatch, label, value);
+      legend.appendChild(item);
+    }
+    body.appendChild(legend);
+  }
+
+  section.append(toggle, body);
+  return section;
+}
+
+function buildCategoryStatsList(): HTMLDivElement {
+  const wrap = document.createElement('div');
+  wrap.className = 'stats-category-list';
+
+  const cats = visibleCategories();
+  const withTotals = cats
+    .map((category) => ({
+      category,
+      apps: apps.filter((a) => a.category === category),
+      total: apps.filter((a) => a.category === category).reduce((sum, a) => sum + totalPlaytimeFor(a.id), 0),
+    }))
+    .filter((c) => c.apps.length > 0)
+    .sort((a, b) => b.total - a.total);
+
+  if (withTotals.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'achievements-empty';
+    empty.textContent = 'No apps yet.';
+    wrap.appendChild(empty);
+    return wrap;
+  }
+
+  for (const { category, apps: catApps, total } of withTotals) {
+    const section = document.createElement('div');
+    section.className = 'stats-category-section';
+
+    const heading = document.createElement('div');
+    heading.className = 'stats-category-heading';
+    const nameEl = document.createElement('span');
+    nameEl.textContent = category;
+    const totalEl = document.createElement('span');
+    totalEl.className = 'stats-category-total';
+    totalEl.textContent = formatPlaytime(total);
+    heading.append(nameEl, totalEl);
+    section.appendChild(heading);
+
+    const sortedApps = [...catApps].sort((a, b) => totalPlaytimeFor(b.id) - totalPlaytimeFor(a.id));
+    const max = Math.max(1, ...sortedApps.map((a) => totalPlaytimeFor(a.id)));
+
+    const list = document.createElement('div');
+    list.className = 'stats-list';
+    for (const app of sortedApps) {
+      const seconds = totalPlaytimeFor(app.id);
+      const row = document.createElement('div');
+      row.className = 'stats-row';
+      row.addEventListener('click', () => {
+        setCurrentView({ type: 'app', id: app.id });
+        renderView();
+      });
+
+      const label = document.createElement('div');
+      label.className = 'stats-row-label';
+      label.textContent = app.name;
+
+      const barTrack = document.createElement('div');
+      barTrack.className = 'stats-bar-track';
+      const bar = document.createElement('div');
+      bar.className = 'stats-bar';
+      bar.style.width = seconds > 0 ? `${Math.max(4, (seconds / max) * 100)}%` : '0%';
+      barTrack.appendChild(bar);
+
+      const value = document.createElement('div');
+      value.className = 'stats-row-value';
+      value.textContent = formatPlaytime(seconds);
+
+      row.append(label, barTrack, value);
+      list.appendChild(row);
+    }
+
+    section.appendChild(list);
+    wrap.appendChild(section);
+  }
+
+  return wrap;
+}
 
 export function renderStats() {
   const container = document.querySelector<HTMLDivElement>('#app-stats')!;
@@ -369,50 +695,7 @@ export function renderStats() {
 
   header.append(heading, totalEl);
 
-  const listSection = document.createElement('div');
-  listSection.className = 'stats-list';
-
-  const sorted = apps
-    .map((app) => ({ app, seconds: totalPlaytimeFor(app.id) }))
-    .filter((x) => x.seconds > 0)
-    .sort((a, b) => b.seconds - a.seconds);
-
-  if (sorted.length === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'achievements-empty';
-    empty.textContent = 'No tracked playtime yet — launch something first.';
-    listSection.appendChild(empty);
-  } else {
-    const max = sorted[0].seconds;
-    for (const { app, seconds } of sorted) {
-      const row = document.createElement('div');
-      row.className = 'stats-row';
-      row.addEventListener('click', () => {
-        setCurrentView({ type: 'app', id: app.id });
-        renderView();
-      });
-
-      const label = document.createElement('div');
-      label.className = 'stats-row-label';
-      label.textContent = app.name;
-
-      const barTrack = document.createElement('div');
-      barTrack.className = 'stats-bar-track';
-      const bar = document.createElement('div');
-      bar.className = 'stats-bar';
-      bar.style.width = `${Math.max(4, (seconds / max) * 100)}%`;
-      barTrack.appendChild(bar);
-
-      const value = document.createElement('div');
-      value.className = 'stats-row-value';
-      value.textContent = formatPlaytime(seconds);
-
-      row.append(label, barTrack, value);
-      listSection.appendChild(row);
-    }
-  }
-
-  container.append(header, listSection);
+  container.append(header, buildChartSection(), buildCategoryStatsList());
 }
 
 // ============================================================

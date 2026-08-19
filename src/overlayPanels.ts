@@ -146,6 +146,7 @@ export function createPanel(
 
   const minBtn = document.createElement('button');
   minBtn.className = 'overlay-widget-btn';
+  minBtn.dataset.role = 'min';
   minBtn.textContent = layout.minimized ? '▢' : '—';
   minBtn.title = layout.minimized ? 'Restore' : 'Minimize';
   minBtn.addEventListener('click', (e) => {
@@ -183,6 +184,88 @@ export function createPanel(
   makeResizable(el, resizeHandle, layout, () => savePanelLayouts(layouts));
 
   return { el, content };
+}
+
+// Approximate height of a panel's title bar alone (padding + font line
+// height) — used to know how much space a minimized panel still occupies.
+const TITLEBAR_HEIGHT = 30;
+const MIN_PANEL_WIDTH = 160;
+const MIN_PANEL_HEIGHT = 80;
+
+// Keeps every open panel fully inside the current canvas bounds. Called
+// whenever the overlay window (and therefore #overlay-canvas) resizes —
+// most commonly because it's tracking a target app window that just got
+// minimized, snapped, or otherwise shrunk. Panels that no longer fit even
+// at their minimum size are auto-minimized (collapsed to just their
+// title bar) rather than left clipped or hidden off-screen; panels that
+// still fit are simply clamped back within the visible area.
+export function reflowPanelsToCanvas(
+  canvas: HTMLElement,
+  layouts: PanelLayouts,
+  mountedEls: Partial<Record<PanelId, HTMLElement>>
+) {
+  const cw = canvas.clientWidth;
+  const ch = canvas.clientHeight;
+  if (cw <= 0 || ch <= 0) return;
+
+  let changed = false;
+  const maxW = Math.max(MIN_PANEL_WIDTH, cw - 4);
+  const maxH = Math.max(MIN_PANEL_HEIGHT, ch - 4);
+  const canFitExpanded = cw >= MIN_PANEL_WIDTH && ch >= MIN_PANEL_HEIGHT;
+
+  (Object.keys(layouts) as PanelId[]).forEach((id) => {
+    const layout = layouts[id];
+    if (layout.closed) return;
+    const el = mountedEls[id];
+    if (!el) return;
+
+    // Auto-minimize panels that no longer fit expanded — but never
+    // auto-restore, so a panel the user minimized on purpose stays that
+    // way even after the canvas grows back.
+    if (!layout.minimized && !canFitExpanded) {
+      layout.minimized = true;
+      el.classList.add('minimized');
+      const minBtn = el.querySelector<HTMLButtonElement>('[data-role="min"]');
+      if (minBtn) {
+        minBtn.textContent = '▢';
+        minBtn.title = 'Restore';
+      }
+      changed = true;
+    }
+
+    if (!layout.minimized) {
+      if (layout.width > maxW) {
+        layout.width = maxW;
+        el.style.width = `${maxW}px`;
+        changed = true;
+      }
+      if (layout.height > maxH) {
+        layout.height = maxH;
+        el.style.height = `${maxH}px`;
+        changed = true;
+      }
+    } else if (layout.width > maxW) {
+      layout.width = maxW;
+      el.style.width = `${maxW}px`;
+      changed = true;
+    }
+
+    const effectiveHeight = layout.minimized ? TITLEBAR_HEIGHT : layout.height;
+    const clampedX = Math.min(Math.max(0, layout.x), Math.max(0, cw - layout.width));
+    const clampedY = Math.min(Math.max(0, layout.y), Math.max(0, ch - effectiveHeight));
+    if (clampedX !== layout.x) {
+      layout.x = clampedX;
+      el.style.left = `${clampedX}px`;
+      changed = true;
+    }
+    if (clampedY !== layout.y) {
+      layout.y = clampedY;
+      el.style.top = `${clampedY}px`;
+      changed = true;
+    }
+  });
+
+  if (changed) savePanelLayouts(layouts);
 }
 
 // Builds the persistent dock row — one box per panel, toggling that

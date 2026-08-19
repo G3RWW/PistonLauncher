@@ -23,6 +23,15 @@ export function setCategories(next: string[]) {
 export function setCurrentView(view: View) {
   currentView = view;
 }
+
+// Categories to actually render. "Uncategorized" is a permanent fallback
+// bucket (used whenever a category is deleted or a scanned app has no
+// vendor match), but it's noise to show in the library/sidebar/stats once
+// every app has a real category — so it's hidden whenever it's empty.
+// Other empty categories stay visible since the user made them on purpose.
+export function visibleCategories(): string[] {
+  return categories.filter((c) => c !== 'Uncategorized' || apps.some((a) => a.category === 'Uncategorized'));
+}
 export function resetTileIndex() {
   tileIndex = 0;
 }

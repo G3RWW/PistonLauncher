@@ -608,6 +608,109 @@ body.is-dragging .category-section { border-color: var(--line); }
   padding: 20px 0;
 }
 
+/* ---------- App detail page: Session History ---------- */
+
+.detail-sessions-card {
+  margin-top: 28px;
+  animation: riseIn 0.32s ease;
+}
+
+.detail-sessions-card h2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--bone);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 9px;
+  margin: 0 0 16px;
+}
+
+.session-period-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.session-period-tab {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--dim);
+  padding: 4px 10px;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.session-period-tab:hover { border-color: var(--brass); color: var(--bone); }
+.session-period-tab.active {
+  border-color: var(--brass);
+  color: var(--brass);
+  background: color-mix(in srgb, var(--brass) 10%, transparent);
+}
+
+.session-history-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.session-group { animation: riseIn 0.2s ease; }
+
+.session-group-header {
+  display: flex;
+  justify-content: space-between;
+  color: var(--bone);
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.session-group-total {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--brass);
+}
+
+.session-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+  font-size: 12px;
+}
+.session-row:last-child { border-bottom: none; }
+
+.session-row-date {
+  color: var(--dim);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.session-row-live {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--brass);
+  border: 1px solid var(--brass-dim);
+  padding: 1px 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.session-row-duration {
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--bone);
+}
+
 /* ---------- Drag: kill text-selection highlight while dragging ---------- */
 
 body.is-dragging,
@@ -829,6 +932,132 @@ body.is-dragging * {
   font-size: 12px;
   color: var(--brass);
   letter-spacing: 0.3px;
+}
+
+/* ---------- Stats page: overall donut chart ---------- */
+
+.stats-chart-section {
+  margin-bottom: 32px;
+  animation: riseIn 0.28s ease;
+}
+
+.stats-chart-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.stats-chart-toggle-btn {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--dim);
+  padding: 6px 14px;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.stats-chart-toggle-btn:hover { border-color: var(--brass); color: var(--bone); }
+.stats-chart-toggle-btn.active {
+  border-color: var(--brass);
+  color: var(--brass);
+  background: color-mix(in srgb, var(--brass) 10%, transparent);
+}
+
+.stats-chart-body {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.stats-donut-slice {
+  transition: opacity 0.15s ease;
+}
+.stats-donut-slice:hover { opacity: 0.8; }
+
+.stats-donut-center {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  fill: var(--bone);
+}
+
+.stats-chart-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
+  max-width: 360px;
+}
+
+.stats-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--bone);
+  padding: 2px 0;
+}
+.stats-legend-item.clickable { cursor: pointer; }
+.stats-legend-item.clickable:hover .stats-legend-label { color: var(--brass); }
+
+.stats-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.stats-legend-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.15s ease;
+}
+
+.stats-legend-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  color: var(--dim);
+  white-space: nowrap;
+}
+
+/* ---------- Stats page: per-category grouped lists ---------- */
+
+.stats-category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.stats-category-section {
+  animation: riseIn 0.3s ease;
+}
+
+.stats-category-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  color: var(--bone);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.stats-category-total {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--brass);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .stats-list {

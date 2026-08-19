@@ -3,7 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { loadApps, loadSessions, saveSessions } from './storage';
 import { formatPlaytime, initials } from './state';
 import type { AppEntry, Session } from './types';
-import { type PanelId, loadPanelLayouts, createPanel, renderDock } from './overlayPanels';
+import { type PanelId, loadPanelLayouts, createPanel, renderDock, reflowPanelsToCanvas } from './overlayPanels';
 import { matchOverlayToWindow, toggleOverlay, hideOverlay } from './overlayShortcut';
 import { applyActiveTheme } from './themeApply';
 
@@ -859,6 +859,25 @@ function refreshDock() {
   });
 }
 refreshDock();
+
+// ---------------------------------------------------------------------
+// Reflow panels whenever the canvas shrinks or grows — most notably
+// when the overlay window resizes to match a tracked app window that
+// just got minimized, snapped, or resized down.
+// ---------------------------------------------------------------------
+
+const overlayCanvasEl = document.querySelector<HTMLDivElement>('#overlay-canvas')!;
+let reflowRaf: number | null = null;
+const canvasResizeObserver = new ResizeObserver(() => {
+  // Coalesce rapid-fire resize events (e.g. during a live window-drag)
+  // into a single reflow per frame.
+  if (reflowRaf != null) return;
+  reflowRaf = requestAnimationFrame(() => {
+    reflowRaf = null;
+    reflowPanelsToCanvas(overlayCanvasEl, loadPanelLayouts(), mountedPanels);
+  });
+});
+canvasResizeObserver.observe(overlayCanvasEl);
 
 // ---------------------------------------------------------------------
 // Live window-following — keeps the overlay matched to the tracked
