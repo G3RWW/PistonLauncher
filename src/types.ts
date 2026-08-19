@@ -8,7 +8,7 @@ export type AppEntry = {
   launchFailed?: boolean; // true if the last launch attempt errored (likely moved/uninstalled)
 };
 
-export type View = { type: 'library' } | { type: 'app'; id: string } | { type: 'stats' };
+export type View = { type: 'library' } | { type: 'app'; id: string } | { type: 'stats' } | { type: 'habit' };
 
 export type ThemeName = 'blueprint' | 'steam' | 'midnight' | 'custom';
 

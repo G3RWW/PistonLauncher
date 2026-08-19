@@ -13,7 +13,7 @@ import {
 import { totalPlaytimeFor, totalPlaytimeAll, sessions, effectiveDurationSec } from './sessions';
 import { buildTile, syncGrid } from './tiles';
 import { renameCategory, deleteCategory, launchAndTrack, editAppPath } from './actions';
-import { openAchievementsModal } from './achievements';
+import { buildHabitCard, renderHabitPage } from './habit';
 import { groupSessionsByPeriod, colorForIndex, type PeriodGrouping } from './statsHelpers';
 
 // ============================================================
@@ -276,7 +276,7 @@ export function toggleLibraryCollapse(category: string) {
 }
 
 // ============================================================
-// App detail view — foundation for achievements
+// App detail view — habit tracking + session history
 // ============================================================
 
 export function renderAppDetail(id: string) {
@@ -345,18 +345,7 @@ export function renderAppDetail(id: string) {
 
   header.append(iconWrap, info);
 
-  const achievementsCard = document.createElement('div');
-  achievementsCard.className = 'detail-achievements-card';
-  achievementsCard.addEventListener('click', () => openAchievementsModal(app));
-
-  const achHeading = document.createElement('h2');
-  achHeading.textContent = 'Achievements';
-
-  const achSummary = document.createElement('div');
-  achSummary.className = 'achievements-summary';
-  achSummary.textContent = 'No achievement set assigned yet — click to view';
-
-  achievementsCard.append(achHeading, achSummary);
+  const habitCard = buildHabitCard(app, () => renderAppDetail(app.id));
 
   const sessionsCard = document.createElement('div');
   sessionsCard.className = 'detail-sessions-card';
@@ -388,7 +377,7 @@ export function renderAppDetail(id: string) {
   renderSessionHistory(historyBody, app.id, appDetailGrouping);
   sessionsCard.append(sessHeading, historyBody);
 
-  container.append(backBtn, header, achievementsCard, sessionsCard);
+  container.append(backBtn, header, habitCard, sessionsCard);
 }
 
 // Which grouping the Session History tabs are on — kept at module scope
@@ -401,7 +390,7 @@ function renderSessionHistory(body: HTMLDivElement, appId: string, grouping: Per
   const appSessions = sessions.filter((s) => s.appId === appId).sort((a, b) => b.startedAt - a.startedAt);
   if (appSessions.length === 0) {
     const empty = document.createElement('div');
-    empty.className = 'achievements-empty';
+    empty.className = 'empty-state';
     empty.textContent = 'No sessions recorded yet — launch this app to start tracking.';
     body.appendChild(empty);
     return;
@@ -560,7 +549,7 @@ function buildChartSection(): HTMLDivElement {
 
   if (slices.length === 0) {
     const empty = document.createElement('div');
-    empty.className = 'achievements-empty';
+    empty.className = 'empty-state';
     empty.textContent = 'No tracked playtime yet — launch something first.';
     body.appendChild(empty);
   } else {
@@ -619,7 +608,7 @@ function buildCategoryStatsList(): HTMLDivElement {
 
   if (withTotals.length === 0) {
     const empty = document.createElement('div');
-    empty.className = 'achievements-empty';
+    empty.className = 'empty-state';
     empty.textContent = 'No apps yet.';
     wrap.appendChild(empty);
     return wrap;
@@ -708,17 +697,21 @@ export function renderView() {
 
   const isDetail = currentView.type === 'app';
   const isStats = currentView.type === 'stats';
+  const isHabit = currentView.type === 'habit';
   const isLibrary = currentView.type === 'library';
 
   document.querySelector('#recent-section')!.classList.toggle('hidden', !isLibrary);
   document.querySelector('#library')!.classList.toggle('hidden', !isLibrary);
   document.querySelector('#app-detail')!.classList.toggle('hidden', !isDetail);
   document.querySelector('#app-stats')!.classList.toggle('hidden', !isStats);
+  document.querySelector('#app-habit')!.classList.toggle('hidden', !isHabit);
 
   if (isDetail) {
     renderAppDetail((currentView as { type: 'app'; id: string }).id);
   } else if (isStats) {
     renderStats();
+  } else if (isHabit) {
+    renderHabitPage();
   } else {
     renderLibrary();
   }

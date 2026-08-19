@@ -21,6 +21,7 @@ App is created using AI (ClaudeAI)
 - **Quick launch** — `Ctrl+Space` anywhere opens a searchable, keyboard-navigable launcher.
 - **Themes** — three built-in themes (Blueprint, Steam, Midnight), plus support for fully custom themes: load any `.css` file from disk, and it's saved to a reselectable, deletable list.
 - **Export/Import** — back up all your apps, categories, and playtime history to a JSON file, or restore from one.
+- **Habit** - Duolingo style streaks for selected app 
 - **Overlay** - launch overlay over your app to:
   - Control your current tracking (pause or stop it)
   - Write session notes to safe text for temporary

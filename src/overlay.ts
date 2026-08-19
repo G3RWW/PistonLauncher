@@ -6,6 +6,8 @@ import type { AppEntry, Session } from './types';
 import { type PanelId, loadPanelLayouts, createPanel, renderDock, reflowPanelsToCanvas } from './overlayPanels';
 import { matchOverlayToWindow, toggleOverlay, hideOverlay } from './overlayShortcut';
 import { applyActiveTheme } from './themeApply';
+import { getHabitAppId } from './habit';
+import { currentStreak, longestStreak, launchedToday } from './statsHelpers';
 
 const CONTEXT_KEY = 'launcher-overlay-context';
 const DAILY_GOAL_KEY = 'launcher-daily-goals'; // Record<appId, minutes>
@@ -53,23 +55,6 @@ function totalPlaytimeTodayForApp(sessions: Session[], appId: string, now: numbe
   return sessions
     .filter((s) => s.appId === appId && isSameDay(s.startedAt, now))
     .reduce((sum, s) => sum + effectiveDurationSec(s, s.endedAt ?? s.pausedAt ?? now), 0);
-}
-
-function streakForApp(sessions: Session[], appId: string): number {
-  const dayKey = (t: number) => {
-    const d = new Date(t);
-    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-  };
-  const days = new Set(sessions.filter((s) => s.appId === appId).map((s) => dayKey(s.startedAt)));
-
-  let streak = 0;
-  const cursor = new Date();
-  if (!days.has(dayKey(cursor.getTime()))) cursor.setDate(cursor.getDate() - 1);
-  while (days.has(dayKey(cursor.getTime()))) {
-    streak++;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  return streak;
 }
 
 // Total counted seconds for one specific calendar day window — used by
@@ -301,12 +286,67 @@ function buildNoteContent(content: HTMLDivElement, session: Session) {
   content.appendChild(noteWrap);
 }
 
-function buildAchievementsContent(content: HTMLDivElement) {
+// The habit app is a separate, globally-selected app (set from its
+// detail page in the launcher) — independent of whatever app is
+// currently being tracked, so this panel doesn't take currentApp as
+// an argument the way the other panels do.
+function buildHabitContent(content: HTMLDivElement) {
   content.innerHTML = '';
-  const achievements = document.createElement('div');
-  achievements.className = 'overlay-achievements';
-  achievements.textContent = 'No achievement set assigned to this app yet.';
-  content.appendChild(achievements);
+
+  const habitId = getHabitAppId();
+  const habitApp = habitId ? loadApps().find((a) => a.id === habitId) : undefined;
+
+  if (!habitApp) {
+    const empty = document.createElement('div');
+    empty.className = 'overlay-empty-small';
+    empty.textContent = 'No habit app set — pick one from its detail page in the launcher.';
+    content.appendChild(empty);
+    return;
+  }
+
+  const wrap = document.createElement('div');
+  wrap.className = 'overlay-habit';
+
+  const nameEl = document.createElement('div');
+  nameEl.className = 'overlay-habit-name';
+  nameEl.textContent = habitApp.name;
+
+  const streakEl = document.createElement('div');
+  streakEl.id = 'overlay-habit-streak';
+  streakEl.className = 'overlay-habit-streak';
+
+  const metaEl = document.createElement('div');
+  metaEl.id = 'overlay-habit-meta';
+  metaEl.className = 'overlay-habit-meta';
+
+  wrap.append(nameEl, streakEl, metaEl);
+  content.appendChild(wrap);
+
+  updateHabitContent();
+}
+
+// Refreshes the habit panel's live-ish bits (streak/today status) without
+// rebuilding the whole panel — called every tick alongside the pomodoro
+// and reminder ticks. Silently no-ops if the panel isn't mounted or has
+// no habit app set.
+function updateHabitContent() {
+  const streakEl = document.querySelector<HTMLElement>('#overlay-habit-streak');
+  if (!streakEl) return; // panel not mounted
+
+  const habitId = getHabitAppId();
+  if (!habitId) return;
+
+  const sessions = loadSessions();
+  const streak = currentStreak(sessions, habitId);
+  const best = longestStreak(sessions, habitId);
+  const doneToday = launchedToday(sessions, habitId);
+
+  streakEl.textContent = streak > 0 ? `🔥 ${streak} day streak` : 'No streak yet';
+
+  const metaEl = document.querySelector<HTMLElement>('#overlay-habit-meta');
+  if (metaEl) {
+    metaEl.textContent = `Best: ${best}d · ${doneToday ? 'Launched today ✓' : 'Not launched today'}`;
+  }
 }
 
 function buildQuickLaunchContent(content: HTMLDivElement, app: AppEntry) {
@@ -675,7 +715,7 @@ function panelBuilders(): Record<PanelId, (content: HTMLDivElement) => void> {
   return {
     spotlight: (content) => buildSpotlightContent(content, currentApp!, currentSession!),
     note: (content) => buildNoteContent(content, currentSession!),
-    achievements: (content) => buildAchievementsContent(content),
+    habit: (content) => buildHabitContent(content),
     quickLaunch: (content) => buildQuickLaunchContent(content, currentApp!),
     weeklyTrend: (content) => buildWeeklyTrendContent(content, loadSessions(), currentApp!.id),
     dailyGoal: (content) => buildDailyGoalContent(content, currentApp!.id),
@@ -739,7 +779,7 @@ function updateLiveStats() {
   const sessionSec = currentSessionElapsedSec(currentSession, now);
   const todaySec = totalPlaytimeTodayForApp(sessions, currentApp.id, now);
   const lifetimeSec = totalPlaytimeForApp(sessions, currentApp.id, now);
-  const streak = streakForApp(sessions, currentApp.id);
+  const streak = currentStreak(sessions, currentApp.id);
 
   const set = (id: string, text: string) => {
     const el = document.querySelector<HTMLElement>(`#${id}`);
@@ -767,6 +807,7 @@ function updateLiveStats() {
 
   tickPomodoro();
   tickReminders();
+  updateHabitContent();
 }
 
 function tickPomodoro() {

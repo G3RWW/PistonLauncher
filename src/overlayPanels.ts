@@ -1,4 +1,4 @@
-export type PanelId = 'spotlight' | 'note' | 'achievements' | 'quickLaunch' | 'weeklyTrend' | 'dailyGoal' | 'pomodoro' | 'reminders';
+export type PanelId = 'spotlight' | 'note' | 'habit' | 'quickLaunch' | 'weeklyTrend' | 'dailyGoal' | 'pomodoro' | 'reminders';
 
 export type PanelLayout = {
   x: number;
@@ -16,7 +16,7 @@ const LAYOUT_KEY = 'overlay-panel-layout';
 const DEFAULT_LAYOUTS: PanelLayouts = {
   spotlight: { x: 40, y: 40, width: 260, height: 320, minimized: false, closed: false },
   note: { x: 320, y: 40, width: 340, height: 400, minimized: false, closed: false },
-  achievements: { x: 680, y: 40, width: 260, height: 320, minimized: false, closed: false },
+  habit: { x: 680, y: 40, width: 260, height: 320, minimized: false, closed: false },
   quickLaunch: { x: 40, y: 380, width: 260, height: 220, minimized: false, closed: true },
   weeklyTrend: { x: 320, y: 460, width: 340, height: 210, minimized: false, closed: true },
   dailyGoal: { x: 680, y: 380, width: 260, height: 140, minimized: false, closed: true },
@@ -27,7 +27,7 @@ const DEFAULT_LAYOUTS: PanelLayouts = {
 export const PANEL_TITLES: Record<PanelId, string> = {
   spotlight: 'Now Tracking',
   note: 'Note',
-  achievements: 'Achievements',
+  habit: 'Habit',
   quickLaunch: 'Quick Launch',
   weeklyTrend: 'Weekly Trend',
   dailyGoal: 'Daily Goal',
@@ -39,7 +39,7 @@ export const PANEL_TITLES: Record<PanelId, string> = {
 export const PANEL_DOCK_LABELS: Record<PanelId, string> = {
   spotlight: 'NT',
   note: 'NO',
-  achievements: 'AC',
+  habit: 'HB',
   quickLaunch: 'QL',
   weeklyTrend: 'WT',
   dailyGoal: 'DG',

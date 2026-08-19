@@ -60,6 +60,12 @@ document.querySelector<HTMLAnchorElement>('#stats-link')!.addEventListener('clic
   renderView();
 });
 
+document.querySelector<HTMLAnchorElement>('#habit-link')!.addEventListener('click', (e) => {
+  e.preventDefault();
+  setCurrentView({ type: 'habit' });
+  renderView();
+});
+
 document.querySelector<HTMLButtonElement>('#new-category-btn')!.addEventListener('click', async () => {
   const name = await customPrompt('New category name');
   if (name && name.trim() && !categories.includes(name.trim())) {
