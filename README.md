@@ -87,7 +87,7 @@ Installers land in `src-tauri/target/release/bundle/` (`nsis/` for the `.exe` in
 
 (Also available in-app and changeable under **Settings → Preferences → Shortcuts**.)
 
-> **Picking a custom overlay shortcut:** avoid single keys or combos commonly bound by games for other purposes — backtick (`` ` ``) in particular is the near-universal developer-console key in many game engines, and a game capturing it first can prevent the keypress from ever reaching Piston. A combo with two or three modifiers and an uncommon letter (e.g. `Ctrl+Alt+Shift+P`) is much less likely to collide.
+> **Picking a custom overlay shortcut:** avoid single keys or combos commonly bound by apps for other purposes — backtick (`` ` ``) in particular is the near-universal developer-console key in many apps, and a app capturing it first can prevent the keypress from ever reaching Piston. A combo with two or three modifiers and an uncommon letter (e.g. `Ctrl+Alt+Shift+P`) is much less likely to collide.
 
 ## Tech stack
 
