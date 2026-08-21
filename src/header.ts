@@ -3,7 +3,7 @@ function closeAllHeaderMenus() {
 }
 document.addEventListener('click', closeAllHeaderMenus);
 
-document.querySelectorAll<HTMLButtonElement>('.menu-trigger').forEach((trigger) => {
+document.querySelectorAll<HTMLButtonElement>('.menu .menu-trigger').forEach((trigger) => {
   trigger.addEventListener('click', (e) => {
     e.stopPropagation();
     const menu = trigger.closest('.menu')!;

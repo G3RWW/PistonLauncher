@@ -11,8 +11,7 @@
   to { opacity: 1; }
 }
 
-:root,
-[data-theme='blueprint'] {
+:root {
   --ink: #121110;
   --panel: #1b1917;
   --panel-raised: #201e1b;
@@ -23,32 +22,6 @@
   --bone: #e7e2d6;
   --dim: #8c8579;
   --danger: #b5544a;
-}
-
-[data-theme='steam'] {
-  --ink: #171a21;
-  --panel: #1b2838;
-  --panel-raised: #16202d;
-  --line: #2a475e;
-  --brass: #66c0f4;
-  --brass-dim: #4c8fb0;
-  --moss: #4c6b22;
-  --bone: #ffffff;
-  --dim: #8f98a0;
-  --danger: #e05252;
-}
-
-[data-theme='midnight'] {
-  --ink: #0a0a0f;
-  --panel: #15151d;
-  --panel-raised: #1a1a24;
-  --line: #2a2a3a;
-  --brass: #9b7ede;
-  --brass-dim: #6f5aa3;
-  --moss: #5a8f7b;
-  --bone: #e8e6f0;
-  --dim: #8a869c;
-  --danger: #d1587a;
 }
 
 html, body { height: 100%; }
