@@ -1,7 +1,7 @@
-import type { AppEntry } from './types';
-import { setCurrentView, nextTileIndex, resetTileIndex, formatPlaytime, initials } from './state';
-import { totalPlaytimeFor, hasActiveSession } from './sessions';
-import { launchAndTrack, renameApp, editAppPath, setCustomIcon, deleteApp, changeCategory } from './actions';
+import type { AppEntry } from '../core/types';
+import { setCurrentView, nextTileIndex, resetTileIndex, formatPlaytime, initials } from '../core/state';
+import { totalPlaytimeFor, hasActiveSession } from '../core/sessions';
+import { launchAndTrack, renameApp, editAppPath, setCustomIcon, deleteApp, changeCategory } from '../core/actions';
 import { renderView } from './render';
 
 export function closeAllMenus() {

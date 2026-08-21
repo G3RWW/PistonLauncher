@@ -2,7 +2,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { renderThemeModalLists } from './theme';
 import { renderHotkeysList } from './hotkeys';
 import { loadSoundSettings, saveSoundSettings, pickCustomChimeFile, playChime, CHIME_STYLE_LABELS, type ChimeStyle } from './notify';
-import { loadCoursesFolder, saveCoursesFolder } from './storage';
+import { loadCoursesFolder, saveCoursesFolder } from '../core/storage';
 
 type SettingsTab = 'sound' | 'themes' | 'shortcuts' | 'courses';
 

@@ -1,6 +1,6 @@
 import { open } from '@tauri-apps/plugin-dialog';
 import { readTextFile } from '@tauri-apps/plugin-fs';
-import { customPrompt, customConfirm } from './dialogs';
+import { customPrompt, customConfirm } from '../core/dialogs';
 import {
   type CustomTheme,
   type ActiveThemeRef,

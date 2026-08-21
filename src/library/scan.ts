@@ -1,9 +1,9 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { ScannedApp } from './types';
-import { apps, categories } from './state';
-import { saveCategories } from './storage';
-import { tryGetIcon } from './icon';
-import { upsertApp } from './actions';
+import type { ScannedApp } from '../core/types';
+import { apps, categories } from '../core/state';
+import { saveCategories } from '../core/storage';
+import { tryGetIcon } from '../core/icon';
+import { upsertApp } from '../core/actions';
 import { renderView } from './render';
 
 let scannedApps: ScannedApp[] = [];

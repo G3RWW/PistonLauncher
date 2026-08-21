@@ -1,10 +1,10 @@
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWebview } from '@tauri-apps/api/webview';
-import { categories, setCurrentView } from './state';
-import { saveCategories } from './storage';
-import { customPrompt } from './dialogs';
-import { tryGetIcon } from './icon';
-import { upsertApp } from './actions';
+import { categories, setCurrentView } from '../core/state';
+import { saveCategories } from '../core/storage';
+import { customPrompt } from '../core/dialogs';
+import { tryGetIcon } from '../core/icon';
+import { upsertApp } from '../core/actions';
 import { renderView } from './render';
 
 // ---- Add-apps popout panel ----

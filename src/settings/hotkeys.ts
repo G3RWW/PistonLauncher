@@ -1,6 +1,6 @@
 import { loadHotkeys, setHotkey, comboFromEvent, type HotkeyId } from './hotkeySettings';
-import { updateOverlayShortcut } from './overlayShortcut';
-import { customAlert } from './dialogs';
+import { updateOverlayShortcut } from '../overlay/overlayShortcut';
+import { customAlert } from '../core/dialogs';
 
 type Entry = { id: HotkeyId | null; keys: string; description: string };
 

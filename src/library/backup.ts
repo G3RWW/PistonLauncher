@@ -1,7 +1,7 @@
 import { save, open } from '@tauri-apps/plugin-dialog';
 import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs';
-import { loadApps, saveApps, loadCategories, saveCategories, saveSessions, loadSessions } from './storage';
-import { customConfirm, customAlert } from './dialogs';
+import { loadApps, saveApps, loadCategories, saveCategories, saveSessions, loadSessions } from '../core/storage';
+import { customConfirm, customAlert } from '../core/dialogs';
 
 async function exportData() {
   const ok = await customConfirm('Export data?', 'Save a backup of all apps, categories, and playtime history.');

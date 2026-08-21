@@ -2945,10 +2945,15 @@ body.is-dragging * {
 }
 
 .course-item-link {
+  background: none;
+  border: none;
+  padding: 0;
   color: var(--brass);
   font-family: 'IBM Plex Mono', monospace;
   font-size: 11.5px;
   text-decoration: none;
+  text-align: left;
+  cursor: pointer;
 }
 .course-item-link:hover {
   text-decoration: underline;
@@ -3024,6 +3029,12 @@ body.is-dragging * {
 
 .overlay-course-link {
   display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
   color: var(--brass);
   font-family: 'IBM Plex Mono', monospace;
   font-size: 10.5px;

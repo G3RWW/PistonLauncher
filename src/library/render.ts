@@ -1,4 +1,4 @@
-import type { AppEntry } from './types';
+import type { AppEntry } from '../core/types';
 import {
   apps,
   libraryCollapsed,
@@ -9,13 +9,13 @@ import {
   formatPlaytime,
   initials,
   visibleCategories,
-} from './state';
-import { totalPlaytimeFor, totalPlaytimeAll, sessions, effectiveDurationSec } from './sessions';
+} from '../core/state';
+import { totalPlaytimeFor, totalPlaytimeAll, sessions, effectiveDurationSec } from '../core/sessions';
 import { buildTile, syncGrid } from './tiles';
-import { renameCategory, deleteCategory, launchAndTrack, editAppPath } from './actions';
-import { buildHabitCard, renderHabitPage } from './habit';
-import { renderCoursesPage, renderCourseDetail } from './courses';
-import { groupSessionsByPeriod, colorForIndex, type PeriodGrouping } from './statsHelpers';
+import { renameCategory, deleteCategory, launchAndTrack, editAppPath } from '../core/actions';
+import { buildHabitCard, renderHabitPage } from '../habit';
+import { renderCoursesPage, renderCourseDetail } from '../courses';
+import { groupSessionsByPeriod, colorForIndex, type PeriodGrouping } from '../core/statsHelpers';
 
 // ============================================================
 // Targeted (partial) DOM updates — only the thing that changed re-renders

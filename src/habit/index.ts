@@ -1,8 +1,8 @@
-import type { AppEntry } from './types';
-import { loadHabitAppId, saveHabitAppId } from './storage';
-import { sessions } from './sessions';
-import { apps } from './state';
-import { currentStreak, longestStreak, launchedToday, activeDaySet } from './statsHelpers';
+import type { AppEntry } from '../core/types';
+import { loadHabitAppId, saveHabitAppId } from '../core/storage';
+import { sessions } from '../core/sessions';
+import { apps } from '../core/state';
+import { currentStreak, longestStreak, launchedToday, activeDaySet } from '../core/statsHelpers';
 
 export function getHabitAppId(): string | null {
   return loadHabitAppId();

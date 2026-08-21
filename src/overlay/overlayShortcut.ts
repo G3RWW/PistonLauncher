@@ -2,8 +2,8 @@ import { register, unregister, isRegistered } from '@tauri-apps/plugin-global-sh
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { PhysicalPosition, PhysicalSize } from '@tauri-apps/api/dpi';
 import { invoke } from '@tauri-apps/api/core';
-import { toTauriAccelerator } from './hotkeySettings';
-import { getActiveSessionForPid } from './sessions';
+import { toTauriAccelerator } from '../settings/hotkeySettings';
+import { getActiveSessionForPid } from '../core/sessions';
 
 const CONTEXT_KEY = 'launcher-overlay-context';
 const ESCAPE_ACCEL = 'Escape';

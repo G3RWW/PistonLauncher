@@ -6,7 +6,7 @@ import { apps, setApps, categories, setCategories, currentView, setCurrentView }
 import { saveApps, saveCategories } from './storage';
 import { customPrompt, customConfirm, customAlert } from './dialogs';
 import { sessions, hasActiveSession, startSession, endSession, reassignSessionPid, removeSessionsForApp } from './sessions';
-import { refreshCategorySection, refreshSidebarGroup, refreshRecentSection, refreshAppEverywhere, renderView, renderLibrary, renderSidebarNav } from './render';
+import { refreshCategorySection, refreshSidebarGroup, refreshRecentSection, refreshAppEverywhere, renderView, renderLibrary, renderSidebarNav } from '../library/render';
 
 export function upsertApp(entry: { name: string; path: string; category: string; icon?: string }) {
   const existing = apps.find((a) => a.path === entry.path);

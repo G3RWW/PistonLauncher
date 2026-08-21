@@ -1,8 +1,8 @@
-import { apps, setCurrentView } from './state';
-import { sessions, setSessions } from './sessions';
-import { loadSessions } from './storage';
-import { renderView } from './render';
-import { patchTileContent } from './tiles';
+import { apps, setCurrentView } from './core/state';
+import { sessions, setSessions } from './core/sessions';
+import { loadSessions } from './core/storage';
+import { renderView } from './library/render';
+import { patchTileContent } from './library/tiles';
 
 function formatElapsed(seconds: number): string {
   const h = Math.floor(seconds / 3600);
