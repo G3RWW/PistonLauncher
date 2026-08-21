@@ -4,7 +4,7 @@ import { loadApps, loadSessions } from '../core/storage';
 import { formatPlaytime } from '../core/state';
 import type { AppEntry, Session } from '../core/types';
 import { type PanelId, type PanelLayouts, loadPanelLayouts, createPanel, renderDock, reflowPanelsToCanvas } from './overlayPanels';
-import { matchOverlayToWindow, toggleOverlay, hideOverlay } from './overlayShortcut';
+import { matchOverlayToWindow, hideOverlay } from './overlayShortcut';
 import { applyActiveTheme } from '../settings/themeApply';
 import { currentStreak } from '../core/statsHelpers';
 import { getContext, currentSessionElapsedSec, totalPlaytimeTodayForApp, totalPlaytimeForApp, loadDailyGoals } from './stats';

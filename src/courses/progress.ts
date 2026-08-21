@@ -1,4 +1,4 @@
-import type { Course, CourseItem, CourseProgress, TaskItem } from '../core/types';
+import type { Course, CourseItem, CourseProgress } from '../core/types';
 import { loadAllCourseProgress, saveAllCourseProgress } from '../core/storage';
 import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
