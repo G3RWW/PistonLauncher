@@ -2418,6 +2418,41 @@ body.is-dragging * {
   margin-top: 16px;
 }
 
+.about-templates {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.about-templates-label {
+  color: var(--dim);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 4px;
+}
+
+.about-template-btn {
+  width: 220px;
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
+  color: var(--dim);
+  padding: 8px 14px;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.about-template-btn:hover {
+  border-color: var(--brass);
+  color: var(--brass);
+}
+
 /* ============================================================
    Habit page
    ============================================================ */

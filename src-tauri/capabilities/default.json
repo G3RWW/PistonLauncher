@@ -5,6 +5,7 @@
   "windows": ["main", "overlay"],
   "permissions": [
     "core:default",
+    "core:path:default",
     "opener:default",
     "dialog:default",
     "notification:default",
@@ -18,6 +19,10 @@
     "core:window:allow-set-position",
     "core:window:allow-set-size",
     {
+      "identifier": "opener:allow-open-path",
+      "allow": [{ "path": "$RESOURCE/**" }]
+    },
+    {
       "identifier": "fs:allow-write-text-file",
       "allow": [{ "path": "**" }]
     },
@@ -29,6 +34,6 @@
       "identifier": "fs:allow-read-file",
       "allow": [{ "path": "**" }]
     }
-    
+
   ]
 }

@@ -1,0 +1,54 @@
+{
+  "title": "Intro to Color Theory",
+  "description": "A short course on color theory basics for illustration.",
+  "lessons": [
+    {
+      "title": "Lesson 1: The Color Wheel",
+      "items": [
+        {
+          "type": "theory",
+          "title": "What is the color wheel?",
+          "body": "The color wheel is a circular diagram that arranges colors according to their chromatic relationship.\n\nPrimary colors — red, blue, and yellow — sit at equal distances around the wheel. Every other color on the wheel is mixed from these three.",
+          "links": [
+            { "label": "Color Theory Basics (10 min)", "url": "https://www.youtube.com/results?search_query=color+theory+basics" }
+          ]
+        },
+        {
+          "type": "task",
+          "title": "Draw a color wheel",
+          "description": "Create your own 12-color wheel using any medium (digital or traditional). Take a photo or export it, then upload it here.",
+          "completion": "file-upload",
+          "folder": "Lesson1"
+        },
+        {
+          "type": "theory",
+          "title": "Complementary colors",
+          "body": "Complementary colors sit directly opposite each other on the color wheel — for example, red and green, or blue and orange.\n\nWhen placed next to each other, complementary colors create the strongest possible contrast, which is why they're often used to make a subject pop."
+        },
+        {
+          "type": "task",
+          "title": "Identify complementary pairs",
+          "description": "Find 5 complementary color pairs in photos, artwork, or objects around you and list them.",
+          "completion": "checkmark"
+        }
+      ]
+    },
+    {
+      "title": "Lesson 2: Color Harmony",
+      "items": [
+        {
+          "type": "theory",
+          "title": "Analogous color schemes",
+          "body": "Analogous colors sit next to each other on the wheel (e.g. yellow, yellow-green, and green). They create harmonious, low-contrast palettes that feel calm and cohesive."
+        },
+        {
+          "type": "task",
+          "title": "Build an analogous palette",
+          "description": "Pick a 3-color analogous palette and apply it to a simple shape or illustration. Upload the result.",
+          "completion": "file-upload",
+          "folder": "Lesson2"
+        }
+      ]
+    }
+  ]
+}

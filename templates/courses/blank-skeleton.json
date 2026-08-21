@@ -1,0 +1,24 @@
+{
+  "title": "Untitled Course",
+  "description": "One sentence describing what this course teaches.",
+  "autoCreateFolder": true,
+  "lessons": [
+    {
+      "title": "Lesson 1",
+      "items": [
+        {
+          "type": "theory",
+          "title": "First theory item",
+          "body": "Write your explanation here.\n\nStart a new paragraph by leaving a blank line, like this.",
+          "links": []
+        },
+        {
+          "type": "task",
+          "title": "First task",
+          "description": "What the learner needs to do to complete this task.",
+          "completion": "checkmark"
+        }
+      ]
+    }
+  ]
+}

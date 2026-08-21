@@ -1,0 +1,47 @@
+{
+  "title": "Test Course",
+  "description": "A tiny course just for testing load/sequencing/task completion.",
+  "lessons": [
+    {
+      "title": "Lesson 1: Basics",
+      "items": [
+        {
+          "type": "theory",
+          "title": "Theory item #1",
+          "body": "This is the first theory item.\n\nIt has two paragraphs, just to check paragraph splitting works.",
+          "links": [
+            { "label": "Example link", "url": "https://example.com" }
+          ]
+        },
+        {
+          "type": "task",
+          "title": "Checkmark task",
+          "description": "This task should be locked until you mark the theory above as read. Click 'Mark complete' once it unlocks.",
+          "completion": "checkmark"
+        },
+        {
+          "type": "theory",
+          "title": "Theory item #2",
+          "body": "This should stay locked until the checkmark task above is completed."
+        },
+        {
+          "type": "task",
+          "title": "File-upload task",
+          "description": "This should stay locked until Theory item #2 is read. Once unlocked, click 'Upload file...' and pick any file — it'll be copied into this course's Lesson1 subfolder, wherever you pointed it at import time.",
+          "completion": "file-upload",
+          "folder": "Lesson1"
+        }
+      ]
+    },
+    {
+      "title": "Lesson 2: Locked until Lesson 1 is done",
+      "items": [
+        {
+          "type": "theory",
+          "title": "Final theory item",
+          "body": "If this stayed locked until everything in Lesson 1 was done, sequencing is working correctly across lessons, not just within one."
+        }
+      ]
+    }
+  ]
+}
