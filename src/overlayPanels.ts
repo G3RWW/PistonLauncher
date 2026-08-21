@@ -1,4 +1,4 @@
-export type PanelId = 'spotlight' | 'note' | 'habit' | 'quickLaunch' | 'weeklyTrend' | 'dailyGoal' | 'pomodoro' | 'reminders';
+export type PanelId = 'spotlight' | 'note' | 'habit' | 'quickLaunch' | 'weeklyTrend' | 'dailyGoal' | 'pomodoro' | 'reminders' | 'course';
 
 export type PanelLayout = {
   x: number;
@@ -22,6 +22,7 @@ const DEFAULT_LAYOUTS: PanelLayouts = {
   dailyGoal: { x: 680, y: 380, width: 260, height: 140, minimized: false, closed: true },
   pomodoro: { x: 960, y: 40, width: 220, height: 280, minimized: false, closed: true },
   reminders: { x: 960, y: 340, width: 220, height: 260, minimized: false, closed: true },
+  course: { x: 680, y: 340, width: 260, height: 280, minimized: false, closed: true },
 };
 
 export const PANEL_TITLES: Record<PanelId, string> = {
@@ -33,6 +34,7 @@ export const PANEL_TITLES: Record<PanelId, string> = {
   dailyGoal: 'Daily Goal',
   pomodoro: 'Focus Timer',
   reminders: 'Reminders',
+  course: 'Course',
 };
 
 // Short label shown on each dock box until real icons are added.
@@ -45,6 +47,7 @@ export const PANEL_DOCK_LABELS: Record<PanelId, string> = {
   dailyGoal: 'DG',
   pomodoro: 'PM',
   reminders: 'RM',
+  course: 'CO',
 };
 
 export function loadPanelLayouts(): PanelLayouts {

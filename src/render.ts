@@ -14,6 +14,7 @@ import { totalPlaytimeFor, totalPlaytimeAll, sessions, effectiveDurationSec } fr
 import { buildTile, syncGrid } from './tiles';
 import { renameCategory, deleteCategory, launchAndTrack, editAppPath } from './actions';
 import { buildHabitCard, renderHabitPage } from './habit';
+import { renderCoursesPage, renderCourseDetail } from './courses';
 import { groupSessionsByPeriod, colorForIndex, type PeriodGrouping } from './statsHelpers';
 
 // ============================================================
@@ -698,6 +699,7 @@ export function renderView() {
   const isDetail = currentView.type === 'app';
   const isStats = currentView.type === 'stats';
   const isHabit = currentView.type === 'habit';
+  const isCourses = currentView.type === 'courses' || currentView.type === 'course';
   const isLibrary = currentView.type === 'library';
 
   document.querySelector('#recent-section')!.classList.toggle('hidden', !isLibrary);
@@ -705,6 +707,7 @@ export function renderView() {
   document.querySelector('#app-detail')!.classList.toggle('hidden', !isDetail);
   document.querySelector('#app-stats')!.classList.toggle('hidden', !isStats);
   document.querySelector('#app-habit')!.classList.toggle('hidden', !isHabit);
+  document.querySelector('#app-courses')!.classList.toggle('hidden', !isCourses);
 
   if (isDetail) {
     renderAppDetail((currentView as { type: 'app'; id: string }).id);
@@ -712,6 +715,10 @@ export function renderView() {
     renderStats();
   } else if (isHabit) {
     renderHabitPage();
+  } else if (currentView.type === 'course') {
+    renderCourseDetail(currentView.id);
+  } else if (currentView.type === 'courses') {
+    renderCoursesPage();
   } else {
     renderLibrary();
   }

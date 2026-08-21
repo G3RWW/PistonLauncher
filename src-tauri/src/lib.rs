@@ -262,6 +262,26 @@ fn get_window_rect_for_pid(pid: u32) -> Option<(i32, i32, i32, i32)> {
 }
 
 // ============================================================
+// Courses (task file uploads)
+// ============================================================
+
+#[tauri::command]
+fn copy_file_to_folder(source_path: String, dest_folder: String) -> Result<String, String> {
+    let source = std::path::Path::new(&source_path);
+    let file_name = source
+        .file_name()
+        .ok_or_else(|| "Source path has no file name".to_string())?;
+
+    let dest_dir = std::path::Path::new(&dest_folder);
+    std::fs::create_dir_all(dest_dir).map_err(|e| e.to_string())?;
+
+    let dest_path = dest_dir.join(file_name);
+    std::fs::copy(&source, &dest_path).map_err(|e| e.to_string())?;
+
+    Ok(file_name.to_string_lossy().to_string())
+}
+
+// ============================================================
 // App entry point
 // ============================================================
 
@@ -281,7 +301,8 @@ pub fn run() {
             get_exe_vendor,
             get_foreground_pid,
             get_current_pid,
-            get_window_rect_for_pid
+            get_window_rect_for_pid,
+            copy_file_to_folder
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

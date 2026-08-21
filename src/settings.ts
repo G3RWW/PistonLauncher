@@ -1,8 +1,10 @@
+import { open } from '@tauri-apps/plugin-dialog';
 import { renderThemeModalLists } from './theme';
 import { renderHotkeysList } from './hotkeys';
 import { loadSoundSettings, saveSoundSettings, pickCustomChimeFile, playChime, CHIME_STYLE_LABELS, type ChimeStyle } from './notify';
+import { loadCoursesFolder, saveCoursesFolder } from './storage';
 
-type SettingsTab = 'sound' | 'themes' | 'shortcuts';
+type SettingsTab = 'sound' | 'themes' | 'shortcuts' | 'courses';
 
 function fileBasename(path: string): string {
   return path.split(/[\\/]/).pop() || path;
@@ -94,6 +96,50 @@ function buildSoundPanel() {
   panel.append(intro, volumeRow, styleRow, fileRow, testBtn);
 }
 
+// Builds the Courses tab's content fresh each time it's opened.
+function buildCoursesPanel() {
+  const panel = document.querySelector<HTMLDivElement>('#settings-panel-courses')!;
+  panel.innerHTML = '';
+
+  const intro = document.createElement('p');
+  intro.className = 'settings-panel-intro';
+  intro.textContent =
+    'The base folder offered when loading a course with file-upload tasks. A subfolder named after each course is created inside it automatically, unless the course file opts out.';
+
+  const folderRow = document.createElement('div');
+  folderRow.className = 'settings-file-row';
+
+  const folder = loadCoursesFolder();
+  const folderNameEl = document.createElement('span');
+  folderNameEl.className = 'settings-file-name';
+  folderNameEl.textContent = folder || 'Not set';
+
+  const chooseBtn = document.createElement('button');
+  chooseBtn.type = 'button';
+  chooseBtn.textContent = folder ? 'Change...' : 'Choose folder...';
+  chooseBtn.addEventListener('click', async () => {
+    const picked = await open({ directory: true, multiple: false });
+    if (!picked || typeof picked !== 'string') return;
+    saveCoursesFolder(picked);
+    buildCoursesPanel();
+  });
+
+  folderRow.append(folderNameEl, chooseBtn);
+  panel.append(intro, folderRow);
+
+  if (folder) {
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'settings-test-btn';
+    clearBtn.textContent = 'Clear';
+    clearBtn.addEventListener('click', () => {
+      saveCoursesFolder(null);
+      buildCoursesPanel();
+    });
+    panel.appendChild(clearBtn);
+  }
+}
+
 function switchTab(tab: SettingsTab) {
   document.querySelectorAll<HTMLButtonElement>('.settings-tab').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.tab === tab);
@@ -104,6 +150,7 @@ function switchTab(tab: SettingsTab) {
   if (tab === 'sound') buildSoundPanel();
   if (tab === 'themes') renderThemeModalLists();
   if (tab === 'shortcuts') renderHotkeysList();
+  if (tab === 'courses') buildCoursesPanel();
 }
 
 document.querySelectorAll<HTMLButtonElement>('.settings-tab').forEach((btn) => {

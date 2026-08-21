@@ -134,10 +134,52 @@ export async function updateOverlayShortcut(combo: string) {
     currentRegistered = null;
   }
 
+  // Defensively unregister the target accelerator itself too, in case a
+  // previous registration for it is still active at the OS level but
+  // this module's own tracking of that (currentRegistered) was reset —
+  // e.g. by a window reload during dev. Without this, register() can
+  // fail with "already registered" even though nothing in the current
+  // session appears to own it.
+  if (await isRegistered(accel).catch(() => false)) {
+    await unregister(accel).catch(() => {});
+  }
+
   await register(accel, (event) => {
     if (event.state === 'Pressed') {
       toggleOverlay();
     }
   });
   currentRegistered = accel;
+}
+
+// Windows can silently stop delivering a global hotkey's keypresses
+// without ever un-registering it — this happens most often when another
+// app's keyboard hook (game overlays, push-to-talk software, RGB/macro
+// utilities) grabs the same key combination after it starts up or
+// updates. That specific case can't be detected or fixed from here —
+// Piston's own registration is still technically valid, the keypress
+// just never reaches it. But if the registration itself silently drops,
+// which does happen occasionally on its own, isRegistered() will report
+// that accurately — so this periodically checks and quietly
+// re-registers, rather than requiring the user to notice it's broken
+// and manually re-set the same combo in Settings.
+let healthCheckStarted = false;
+export function startShortcutHealthCheck() {
+  if (healthCheckStarted) return;
+  healthCheckStarted = true;
+  setInterval(async () => {
+    if (!currentRegistered) return;
+    try {
+      const stillRegistered = await isRegistered(currentRegistered);
+      if (!stillRegistered) {
+        await register(currentRegistered, (event) => {
+          if (event.state === 'Pressed') {
+            toggleOverlay();
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Shortcut health check failed to re-register:', err);
+    }
+  }, 15000);
 }

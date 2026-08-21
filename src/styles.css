@@ -2674,3 +2674,362 @@ body.is-dragging * {
   background: var(--panel-raised);
   color: var(--brass);
 }
+
+/* ============================================================
+   Courses
+   ============================================================ */
+
+/* ---------- Library page (grid of course cards) ---------- */
+
+.courses-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.courses-load-btn {
+  background: var(--brass);
+  color: #1a1400;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  transition: filter 0.15s ease;
+}
+.courses-load-btn:hover {
+  filter: brightness(1.12);
+}
+
+.courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  animation: riseIn 0.25s ease;
+}
+
+.course-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
+  padding: 16px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s ease;
+  position: relative;
+}
+.course-card:hover {
+  border-color: var(--brass);
+}
+.course-card-active {
+  border-color: var(--moss);
+}
+
+.course-card-title {
+  color: var(--bone);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.course-card-desc {
+  color: var(--dim);
+  font-size: 12px;
+  margin-bottom: 14px;
+  line-height: 1.4;
+}
+
+.course-card-progress-bar {
+  height: 4px;
+  background: var(--line);
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+.course-card-progress-fill {
+  height: 100%;
+  background: var(--brass);
+  transition: width 0.2s ease;
+}
+
+.course-card-progress-label {
+  color: var(--dim);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+}
+
+.course-card-active-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--moss);
+  color: #08150d;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 3px 6px;
+}
+
+/* ---------- Course detail page ---------- */
+
+.course-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+  animation: riseIn 0.25s ease;
+}
+
+.course-back-btn {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--dim);
+  padding: 6px 12px;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.course-back-btn:hover {
+  border-color: var(--brass);
+  color: var(--brass);
+}
+
+.course-detail-header h1 {
+  flex: 1;
+  color: var(--bone);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.course-detail-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.course-active-btn,
+.course-remove-btn {
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
+  color: var(--dim);
+  padding: 7px 12px;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.course-active-btn:hover:not(:disabled) {
+  border-color: var(--moss);
+  color: var(--moss);
+}
+.course-active-btn:disabled {
+  color: var(--moss);
+  cursor: default;
+}
+.course-remove-btn:hover {
+  border-color: #c0574a;
+  color: #c0574a;
+}
+
+.course-detail-desc {
+  color: var(--dim);
+  font-size: 13px;
+  margin: 12px 0;
+  max-width: 640px;
+  line-height: 1.5;
+}
+
+.course-detail-progress-line {
+  color: var(--dim);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  margin-bottom: 24px;
+}
+
+.course-lessons {
+  max-width: 680px;
+  animation: riseIn 0.3s ease;
+}
+
+.course-lesson {
+  margin-bottom: 28px;
+}
+
+.course-lesson-title {
+  color: var(--brass);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding-bottom: 8px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.course-item {
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line);
+  padding: 14px 16px;
+  margin-bottom: 8px;
+}
+.course-item-theory {
+  border-left-color: var(--brass);
+}
+.course-item-task {
+  border-left-color: var(--moss);
+}
+.course-item-done {
+  opacity: 0.7;
+}
+.course-item-locked {
+  opacity: 0.45;
+}
+
+.course-item-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.course-item-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.course-item-title {
+  color: var(--bone);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.course-item-locked-note {
+  color: var(--dim);
+  font-size: 11.5px;
+  font-style: italic;
+  margin-top: 6px;
+}
+
+.course-item-body {
+  margin-top: 10px;
+  color: var(--dim);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.course-item-body p {
+  margin-bottom: 8px;
+}
+.course-item-body p:last-child {
+  margin-bottom: 0;
+}
+
+.course-item-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.course-item-link {
+  color: var(--brass);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11.5px;
+  text-decoration: none;
+}
+.course-item-link:hover {
+  text-decoration: underline;
+}
+
+.course-item-action-btn {
+  margin-top: 12px;
+  background: var(--brass);
+  color: #1a1400;
+  border: none;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  font-size: 10.5px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  transition: filter 0.15s ease;
+}
+.course-item-action-btn:hover {
+  filter: brightness(1.12);
+}
+
+.course-item-done-note {
+  margin-top: 10px;
+  color: var(--moss);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  display: inline-block;
+  margin-right: 10px;
+}
+
+.course-item-undo-btn {
+  margin-top: 10px;
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--dim);
+  padding: 5px 10px;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+}
+.course-item-undo-btn:hover {
+  border-color: #c0574a;
+  color: #c0574a;
+}
+
+/* ---------- Overlay Course panel ---------- */
+
+.overlay-course-title {
+  color: var(--bone);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12.5px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.overlay-course-item-title {
+  color: var(--brass);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-top: 10px;
+  margin-bottom: 6px;
+}
+
+.overlay-course-item-body {
+  color: var(--dim);
+  font-size: 11px;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.overlay-course-link {
+  display: block;
+  color: var(--brass);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  text-decoration: none;
+  margin-bottom: 8px;
+}
+.overlay-course-link:hover {
+  text-decoration: underline;
+}

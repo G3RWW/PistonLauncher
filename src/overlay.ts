@@ -1,6 +1,6 @@
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { invoke } from '@tauri-apps/api/core';
-import { loadApps, loadSessions, saveSessions } from './storage';
+import { loadApps, loadSessions, saveSessions, loadCourses, loadActiveCourseId } from './storage';
 import { formatPlaytime, initials } from './state';
 import type { AppEntry, Session } from './types';
 import { type PanelId, type PanelLayouts, loadPanelLayouts, createPanel, renderDock, reflowPanelsToCanvas } from './overlayPanels';
@@ -10,6 +10,15 @@ import { getHabitAppId } from './habit';
 import { currentStreak, longestStreak, launchedToday } from './statsHelpers';
 import { notify, playChime } from './notify';
 import { loadPomodoro, savePomodoro, loadReminders, saveReminders } from './timerState';
+import {
+  loadCourseProgress,
+  courseCompletionFraction,
+  nextUnsatisfiedItem,
+  markTheorySeen,
+  completeTaskCheckmark,
+  completeTaskFileUpload,
+  resolveTaskUploadFolder,
+} from './courses';
 
 const CONTEXT_KEY = 'launcher-overlay-context';
 const DAILY_GOAL_KEY = 'launcher-daily-goals'; // Record<appId, minutes>
@@ -669,6 +678,107 @@ function buildRemindersContent(content: HTMLDivElement) {
   content.append(addRow, list);
 }
 
+// Shows the active course's next not-yet-satisfied item (theory or
+// task), with a quick-complete control right in the overlay — so
+// progressing through a course doesn't require switching back to the
+// main window. Which course is "active" is set from the main app's
+// Courses page.
+function buildCourseContent(content: HTMLDivElement) {
+  content.innerHTML = '';
+
+  const activeId = loadActiveCourseId();
+  const course = activeId ? loadCourses().find((c) => c.id === activeId) : undefined;
+
+  if (!course) {
+    const empty = document.createElement('div');
+    empty.className = 'overlay-empty-small';
+    empty.textContent = 'No active course. Set one from Courses \u2192 Set as active for overlay.';
+    content.appendChild(empty);
+    return;
+  }
+
+  const progress = loadCourseProgress(course.id);
+  const { done, total } = courseCompletionFraction(course, progress);
+
+  const title = document.createElement('div');
+  title.className = 'overlay-course-title';
+  title.textContent = course.title;
+
+  const progressLine = document.createElement('div');
+  progressLine.className = 'overlay-reminder-countdown';
+  progressLine.textContent = `${done}/${total} complete`;
+
+  content.append(title, progressLine);
+
+  const next = nextUnsatisfiedItem(course, progress);
+  if (!next) {
+    const doneMsg = document.createElement('div');
+    doneMsg.className = 'overlay-empty-small';
+    doneMsg.textContent = 'Course complete! 🎉';
+    content.appendChild(doneMsg);
+    return;
+  }
+
+  const itemTitle = document.createElement('div');
+  itemTitle.className = 'overlay-course-item-title';
+  itemTitle.textContent = (next.type === 'theory' ? '📖 ' : '📝 ') + next.title;
+  content.appendChild(itemTitle);
+
+  if (next.type === 'theory') {
+    const body = document.createElement('div');
+    body.className = 'overlay-course-item-body';
+    body.textContent = next.body.split(/\n\s*\n/)[0]?.trim() ?? '';
+    content.appendChild(body);
+
+    if (next.links && next.links.length > 0) {
+      const link = next.links[0];
+      const a = document.createElement('a');
+      a.href = link.url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.className = 'overlay-course-link';
+      a.textContent = `▶ ${link.label}`;
+      content.appendChild(a);
+    }
+
+    const doneBtn = document.createElement('button');
+    doneBtn.className = 'overlay-action-btn';
+    doneBtn.textContent = "I've read this";
+    doneBtn.addEventListener('click', () => {
+      markTheorySeen(course.id, next.id);
+      buildCourseContent(content);
+    });
+    content.appendChild(doneBtn);
+  } else {
+    const desc = document.createElement('div');
+    desc.className = 'overlay-course-item-body';
+    desc.textContent = next.description;
+    content.appendChild(desc);
+
+    if (next.completion === 'checkmark') {
+      const doneBtn = document.createElement('button');
+      doneBtn.className = 'overlay-action-btn';
+      doneBtn.textContent = 'Mark complete';
+      doneBtn.addEventListener('click', () => {
+        completeTaskCheckmark(course.id, next.id);
+        buildCourseContent(content);
+      });
+      content.appendChild(doneBtn);
+    } else {
+      const uploadBtn = document.createElement('button');
+      uploadBtn.className = 'overlay-action-btn';
+      uploadBtn.textContent = 'Upload file...';
+      uploadBtn.addEventListener('click', async () => {
+        const folder = resolveTaskUploadFolder(course, next);
+        if (!folder) return; // no files folder configured — main app surfaces the fix
+        const ok = await completeTaskFileUpload(course.id, next.id, folder);
+        if (ok) buildCourseContent(content);
+      });
+      content.appendChild(uploadBtn);
+    }
+  }
+}
+
 // ---------------------------------------------------------------------
 // Canvas / panel orchestration — mounts/unmounts individual panels as
 // their layout's closed-state changes, rather than tearing down the
@@ -687,6 +797,7 @@ function panelBuilders(): Record<PanelId, (content: HTMLDivElement) => void> {
     dailyGoal: (content) => buildDailyGoalContent(content, currentApp!.id),
     pomodoro: (content) => buildPomodoroContent(content),
     reminders: (content) => buildRemindersContent(content),
+    course: (content) => buildCourseContent(content),
   };
 }
 
