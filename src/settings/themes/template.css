@@ -1,0 +1,74 @@
+/* ============================================================
+   THEME TEMPLATE
+   ============================================================
+   Copy this file, rename it, fill in your own colors, then load it
+   via Settings -> Preferences -> Themes -> "+ Add Custom Theme File
+   (.css)...". That's it — no rebuild needed, it's loaded at runtime.
+
+   The only REQUIRED part is the :root block below — every variable in
+   it is used throughout the app's base stylesheet (styles.css), so
+   setting these ten is enough to reskin the whole app consistently.
+
+   Everything below the :root block is OPTIONAL. If you want to go
+   further than a palette swap — different gradients, different
+   shadows, a different font treatment on specific elements — add CSS
+   rules for the specific selectors you want to override. See
+   aurora.css alongside this file for a real example of a theme that
+   does exactly that (gradient panels, glowing borders, gradient text).
+   Because your file loads AFTER styles.css, any rule you write here
+   simply overrides the base rule for that selector.
+   ============================================================ */
+
+:root {
+  /* Deepest background layer — behind everything else (the very edge
+     of the window, and used in a few semi-transparent overlays via
+     color-mix()). Should be your darkest (or lightest, for a light
+     theme) tone. */
+  --ink: #121110;
+
+  /* The main surface color: sidebar, header, cards, modals. This is
+     what most of the app's background actually looks like. */
+  --panel: #1b1917;
+
+  /* A slightly elevated/lighter variant of --panel — used for nested
+     surfaces sitting on top of a --panel background (e.g. a settings
+     row inside a modal, an input field, a hovered menu item). */
+  --panel-raised: #201e1b;
+
+  /* Borders, dividers, and separators throughout the app. Should read
+     as a subtle step up from --panel, not a strong outline. */
+  --line: #322f2a;
+
+  /* The theme's primary accent color. Used for the logo, active nav
+     links, primary buttons, progress bars, and anywhere something
+     needs to stand out as "the theme's color." Pick something with
+     good contrast against --panel. */
+  --brass: #c9974a;
+
+  /* A muted/darker variant of --brass — used for secondary accents:
+     scrollbar thumbs, subtitle icons, less-prominent borders that
+     still want a touch of the accent color. */
+  --brass-dim: #8a6b3c;
+
+  /* A secondary accent, distinct from --brass — used sparingly, mostly
+     for "positive/active" indicators (e.g. an "active course" badge,
+     a completed checklist item). Pick something that reads as
+     "success" or "growth" without clashing with --brass. */
+  --moss: #6f8768;
+
+  /* Primary text color — should have strong contrast against --panel.
+     Used for headings, body text, and anything meant to be the most
+     readable element on screen. */
+  --bone: #e7e2d6;
+
+  /* Secondary/muted text color — used for labels, captions, timestamps,
+     and any text that should visually recede behind --bone. */
+  --dim: #8c8579;
+
+  /* Reserved for destructive actions and error states — "Remove",
+     "Delete", broken-path warnings, validation errors. Should read
+     unambiguously as a warning color regardless of your palette. */
+  --danger: #b5544a;
+}
+
+/* ---- Optional: go further than a palette swap below this line ---- */

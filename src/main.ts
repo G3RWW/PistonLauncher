@@ -1,25 +1,25 @@
 import './styles.css';
 
 // Side-effect modules: each wires up its own event listeners on import.
-import './theme';
+import './settings/theme';
 import './header';
-import './panels';
-import './scan';
-import './backup';
+import './library/panels';
+import './library/scan';
+import './library/backup';
 import './quickLaunch';
-import './hotkeys';
-import './settings';
+import './settings/hotkeys';
+import './settings/settings';
 import './courses';
 import './about';
 import './runningStatus';
 import './modalBehavior';
 
-import { renderView } from './render';
-import { reconcileOrphanedSessions } from './actions';
-import { updateOverlayShortcut, startShortcutHealthCheck } from './overlayShortcut';
-import { getHotkey } from './hotkeySettings';
+import { renderView } from './library/render';
+import { reconcileOrphanedSessions } from './core/actions';
+import { updateOverlayShortcut, startShortcutHealthCheck } from './overlay/overlayShortcut';
+import { getHotkey } from './settings/hotkeySettings';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { resetTimersOnAppClose } from './timerState';
+import { resetTimersOnAppClose } from './core/timerState';
 
 renderView();
 reconcileOrphanedSessions();

@@ -1,0 +1,280 @@
+/* ============================================================
+   AURORA — a gradient-rich, jewel-toned theme, now with the sky
+   itself drifting: shifting nebula glow, a slow-moving light
+   curtain, a shimmering logo, and sheen-sweep buttons.
+   ============================================================ */
+
+:root {
+  --ink: #0d0221;
+  --panel: linear-gradient(145deg, #1a0b2e 0%, #170a2b 100%);
+  --panel-raised: linear-gradient(145deg, #26123f 0%, #1e0e34 100%);
+  --line: #4a2e78;
+  --brass: #e14eca;
+  --brass-dim: #9c3aa8;
+  --moss: #3ddcc5;
+  --bone: #f2e9ff;
+  --dim: #a493c9;
+  --danger: #ff5f8f;
+}
+
+/* ---- Layered nebula backdrop — the glows slowly drift instead of
+   sitting static, like real aurora curtains shifting overhead ---- */
+
+@keyframes auroraDrift {
+  0%, 100% { background-position: 0% 0%, 100% 0%, 50% 100%, 0% 0%; }
+  50% { background-position: 25% 12%, 75% 15%, 42% 88%, 0% 0%; }
+}
+
+body {
+  background:
+    radial-gradient(1400px 700px at 12% -10%, rgba(225, 78, 202, 0.14) 0%, transparent 55%),
+    radial-gradient(1000px 650px at 92% 5%, rgba(61, 220, 197, 0.12) 0%, transparent 50%),
+    radial-gradient(900px 500px at 50% 110%, rgba(156, 58, 168, 0.10) 0%, transparent 60%),
+    linear-gradient(180deg, #0d0221 0%, #0a0119 100%);
+  background-size: 180% 180%, 180% 180%, 180% 180%, 100% 100%;
+  animation: auroraDrift 22s ease-in-out infinite;
+  position: relative;
+}
+
+/* A soft blurred light-curtain sweeping slowly across everything,
+   underneath the actual UI. */
+@keyframes auroraWave {
+  0%, 100% { transform: translateX(-8%) scaleY(1); opacity: 0.5; }
+  50% { transform: translateX(8%) scaleY(1.08); opacity: 0.8; }
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: -10%;
+  pointer-events: none;
+  z-index: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgba(225, 78, 202, 0.1) 35%,
+    rgba(61, 220, 197, 0.08) 50%,
+    rgba(156, 58, 168, 0.1) 65%,
+    transparent 80%
+  );
+  filter: blur(50px);
+  animation: auroraWave 14s ease-in-out infinite;
+}
+#app { position: relative; z-index: 1; }
+
+/* ---- Star field: two offset dot-layers twinkling at different
+   rates, so it never looks mechanically synchronized. Sits behind
+   #app's actual content (z-index: -1 within #app's own stacking
+   context) but above body's nebula/curtain layers, which live in
+   body's own stacking context underneath. ---- */
+
+@keyframes auroraTwinkle {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.9; }
+}
+@keyframes auroraStarDrift {
+  from { background-position: 0 0; }
+  to { background-position: 300px 200px; }
+}
+
+#app::before,
+#app::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background-repeat: repeat;
+  background-size: 340px 220px;
+}
+#app::before {
+  background-image:
+    radial-gradient(1.5px 1.5px at 30px 40px, rgba(242, 233, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 120px 90px, rgba(225, 78, 202, 0.6), transparent),
+    radial-gradient(1.5px 1.5px at 220px 150px, rgba(61, 220, 197, 0.55), transparent),
+    radial-gradient(1px 1px at 280px 60px, rgba(242, 233, 255, 0.7), transparent);
+  animation: auroraTwinkle 4.5s ease-in-out infinite, auroraStarDrift 90s linear infinite;
+}
+#app::after {
+  background-position: 90px 130px;
+  background-image:
+    radial-gradient(1px 1px at 60px 20px, rgba(242, 233, 255, 0.6), transparent),
+    radial-gradient(1.5px 1.5px at 160px 110px, rgba(156, 58, 168, 0.55), transparent),
+    radial-gradient(1px 1px at 260px 180px, rgba(242, 233, 255, 0.7), transparent);
+  animation: auroraTwinkle 6s ease-in-out infinite reverse, auroraStarDrift 130s linear infinite reverse;
+}
+
+/* ---- Sidebar: gradient panel with a glowing right edge ---- */
+
+#sidebar {
+  border-right: 1px solid var(--line);
+  box-shadow: 2px 0 24px rgba(225, 78, 202, 0.06);
+}
+
+/* ---- Logo: the gradient itself shimmers back and forth ---- */
+
+@keyframes auroraTextShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.logo {
+  background: linear-gradient(90deg, #e14eca, #9c6fe0 40%, #3ddcc5 70%, #e14eca);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: auroraTextShift 6s ease-in-out infinite;
+}
+.logo::before {
+  background: linear-gradient(90deg, #e14eca, #3ddcc5);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---- Header: gradient bar instead of a flat panel ---- */
+
+#app-header {
+  background: linear-gradient(90deg, #170a2b 0%, #1e0e34 45%, #170a2b 100%);
+  border-bottom: 1px solid var(--line);
+}
+
+.menu-trigger:hover,
+.menu.open .menu-trigger {
+  background: linear-gradient(180deg, rgba(225, 78, 202, 0.12), rgba(61, 220, 197, 0.06));
+}
+
+.menu-dropdown {
+  background: linear-gradient(160deg, #241040, #1a0b2e);
+  box-shadow: 0 10px 30px rgba(225, 78, 202, 0.1), 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* ---- Tiles: gradient cover, glowing hover ---- */
+
+.tile {
+  background: linear-gradient(160deg, #1e0e34, #170a2b);
+  transition: border-color 0.2s ease, transform 0.15s ease, box-shadow 0.25s ease;
+}
+.tile:hover {
+  border-color: #e14eca;
+  box-shadow: 0 0 0 1px rgba(225, 78, 202, 0.25), 0 10px 26px rgba(225, 78, 202, 0.12);
+}
+
+.tile-cover {
+  background: linear-gradient(145deg, #2a1348 0%, #1c0d33 100%);
+}
+.tile:hover .tile-cover {
+  background: linear-gradient(145deg, #3a1a5c 0%, #24123f 100%);
+}
+
+.tile::before,
+.tile::after {
+  border-color: #3ddcc5;
+}
+
+.tile-time::before {
+  color: #3ddcc5;
+}
+
+/* ---- Buttons: gradient fills, now with a light-sweep on hover ---- */
+
+#scan-btn,
+#add-form button,
+#scan-add-btn,
+.detail-launch-btn {
+  position: relative;
+  overflow: hidden;
+}
+#scan-btn::after,
+#add-form button::after,
+#scan-add-btn::after,
+.detail-launch-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.5s ease;
+}
+#scan-btn:hover:not(:disabled)::after,
+#add-form button:hover::after,
+#scan-add-btn:hover::after,
+.detail-launch-btn:hover::after {
+  left: 130%;
+}
+
+#scan-btn {
+  background: linear-gradient(135deg, #e14eca, #9c3aa8);
+  color: #fff;
+}
+#scan-btn:hover:not(:disabled) {
+  filter: brightness(1.15) saturate(1.1);
+}
+
+#add-form button {
+  background: linear-gradient(135deg, #3ddcc5, #21a191);
+  color: #06231f;
+}
+
+#scan-add-btn {
+  background: linear-gradient(135deg, #3ddcc5, #21a191);
+  color: #06231f;
+}
+
+.detail-launch-btn {
+  background: linear-gradient(135deg, #e14eca, #9c3aa8);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(225, 78, 202, 0.25);
+}
+.detail-launch-btn:hover {
+  filter: brightness(1.12);
+}
+
+/* ---- Active sidebar link: shimmering gradient underline that
+   slowly shifts between the theme's two accent hues ---- */
+
+@keyframes auroraBorderShift {
+  0%, 100% { border-left-color: #e14eca; }
+  50% { border-left-color: #3ddcc5; }
+}
+
+.sidebar-app-link.active {
+  background: linear-gradient(90deg, rgba(225, 78, 202, 0.14), transparent);
+  animation: auroraBorderShift 5s ease-in-out infinite;
+}
+
+.chevron {
+  background: linear-gradient(90deg, #e14eca, #3ddcc5);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---- Stats bars: gradient fill that slowly flows ---- */
+
+@keyframes auroraFlow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.stats-bar {
+  background: linear-gradient(90deg, #9c3aa8, #e14eca 50%, #3ddcc5 100%, #9c3aa8 150%);
+  background-size: 200% auto;
+  animation: auroraFlow 8s ease-in-out infinite;
+}
+
+.stats-bar-track {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ---- Section headings: subtle gradient rule ---- */
+
+#recent-section h2,
+.category-section h2,
+.stats-header h2 {
+  border-image: linear-gradient(90deg, #e14eca, transparent) 1;
+}

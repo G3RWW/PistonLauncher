@@ -1,0 +1,104 @@
+/* ============================================================
+   BLUEPRINT — a technical drafting-table theme: sharp corners,
+   ruler-tick accents, and a slowly drifting grid-paper background.
+   ============================================================ */
+
+:root {
+  --ink: #121110;
+  --panel: #1b1917;
+  --panel-raised: #201e1b;
+  --line: #322f2a;
+  --brass: #c9974a;
+  --brass-dim: #8a6b3c;
+  --moss: #6f8768;
+  --bone: #e7e2d6;
+  --dim: #8c8579;
+  --danger: #b5544a;
+}
+
+/* ---- Drafting-paper backdrop: a faint grid that drifts diagonally ---- */
+
+@keyframes blueprintDrift {
+  from { background-position: 0 0; }
+  to { background-position: 64px 64px; }
+}
+
+body {
+  background:
+    repeating-linear-gradient(0deg, rgba(201, 151, 74, 0.05) 0px, rgba(201, 151, 74, 0.05) 1px, transparent 1px, transparent 32px),
+    repeating-linear-gradient(90deg, rgba(201, 151, 74, 0.05) 0px, rgba(201, 151, 74, 0.05) 1px, transparent 1px, transparent 32px),
+    var(--ink);
+  animation: blueprintDrift 40s linear infinite;
+}
+
+/* ---- Sidebar: a drafting-table ruler edge ---- */
+
+#sidebar {
+  border-right: 1px solid var(--line);
+  position: relative;
+}
+#sidebar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -1px;
+  width: 3px;
+  height: 100%;
+  background: repeating-linear-gradient(0deg, var(--brass) 0px, var(--brass) 2px, transparent 2px, transparent 10px);
+  opacity: 0.35;
+}
+
+.logo::before {
+  content: '\2610  '; /* a small drafting square glyph */
+  color: var(--brass-dim);
+}
+
+/* ---- Active sidebar link: the existing brass left-border pulses
+   gently, like an indicator light ---- */
+
+@keyframes blueprintBorderPulse {
+  0%, 100% { border-left-color: var(--brass); }
+  50% { border-left-color: var(--brass-dim); }
+}
+
+.sidebar-app-link.active {
+  animation: blueprintBorderPulse 2s ease-in-out infinite;
+}
+
+/* ---- Buttons: sharp, with a subtle lift on hover ---- */
+
+.courses-load-btn,
+.habit-set-btn,
+.habit-remove-btn,
+.scan-btn,
+.detail-launch-btn,
+#add-form button,
+#scan-add-btn,
+.course-item-action-btn,
+.settings-test-btn,
+.load-theme-file-btn,
+.course-active-btn,
+.about-template-btn {
+  border-radius: 0;
+  position: relative;
+  transition: filter 0.15s ease, transform 0.1s ease;
+}
+.courses-load-btn:hover,
+.habit-set-btn:hover,
+.scan-btn:hover:not(:disabled),
+.detail-launch-btn:hover,
+.course-item-action-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* ---- Tiles: keep the sharp registration-mark corners, add a slow pulse ---- */
+
+@keyframes blueprintPulse {
+  0%, 100% { border-color: var(--line); opacity: 1; }
+  50% { border-color: var(--brass-dim); opacity: 1; }
+}
+.tile { border-radius: 0; }
+.tile-cover { border-radius: 0; }
+.tile:hover { animation: blueprintPulse 2s ease-in-out infinite; }
+
+.modal-content { border-radius: 0; }

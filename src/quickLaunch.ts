@@ -1,7 +1,7 @@
-import type { AppEntry } from './types';
-import { apps } from './state';
-import { launchAndTrack } from './actions';
-import { getHotkey, matchesHotkey } from './hotkeySettings';
+import type { AppEntry } from './core/types';
+import { apps } from './core/state';
+import { launchAndTrack } from './core/actions';
+import { getHotkey, matchesHotkey } from './settings/hotkeySettings';
 
 let filtered: AppEntry[] = [];
 let selectedIndex = 0;

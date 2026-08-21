@@ -1,0 +1,111 @@
+/* ============================================================
+   STEAM — a glossy, rounded gaming-storefront theme: pill buttons
+   with a light-sweep hover, and a soft breathing glow behind
+   everything, like a blurred hero banner.
+   ============================================================ */
+
+:root {
+  --ink: #171a21;
+  --panel: #1b2838;
+  --panel-raised: #16202d;
+  --line: #2a475e;
+  --brass: #66c0f4;
+  --brass-dim: #4c8fb0;
+  --moss: #4c6b22;
+  --bone: #ffffff;
+  --dim: #8f98a0;
+  --danger: #e05252;
+}
+
+/* ---- Ambient glow backdrop: a slow, breathing radial light ---- */
+
+@keyframes steamBreathe {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.08); }
+}
+
+body {
+  background: var(--ink);
+  position: relative;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(900px 500px at 15% -10%, rgba(102, 192, 244, 0.16) 0%, transparent 55%),
+    radial-gradient(700px 450px at 100% 10%, rgba(76, 143, 176, 0.12) 0%, transparent 50%);
+  animation: steamBreathe 8s ease-in-out infinite;
+}
+#app { position: relative; z-index: 1; }
+
+/* ---- Rounded, glossy buttons with a light-sweep hover ---- */
+
+.courses-load-btn,
+.habit-set-btn,
+.habit-remove-btn,
+.scan-btn,
+.detail-launch-btn,
+#add-form button,
+#scan-add-btn,
+.course-item-action-btn,
+.settings-test-btn,
+.load-theme-file-btn,
+.course-active-btn,
+.about-template-btn {
+  border-radius: 20px;
+  padding-left: 18px;
+  padding-right: 18px;
+  position: relative;
+  overflow: hidden;
+  transition: filter 0.15s ease, box-shadow 0.2s ease;
+}
+.courses-load-btn::after,
+.habit-set-btn::after,
+.scan-btn::after,
+.detail-launch-btn::after,
+.course-item-action-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.5s ease;
+}
+.courses-load-btn:hover::after,
+.habit-set-btn:hover::after,
+.scan-btn:hover:not(:disabled)::after,
+.detail-launch-btn:hover::after,
+.course-item-action-btn:hover::after {
+  left: 130%;
+}
+.detail-launch-btn:hover,
+.scan-btn:hover:not(:disabled) {
+  box-shadow: 0 4px 20px rgba(102, 192, 244, 0.35);
+}
+
+/* ---- Active nav: a glowing rounded pill instead of a bare underline ---- */
+
+.sidebar-app-link.active {
+  border-radius: 0 8px 8px 0;
+  background: rgba(102, 192, 244, 0.1);
+}
+
+/* ---- Tiles: rounded covers, no drafting brackets, soft lift + glow ---- */
+
+.tile { border-radius: 6px; }
+.tile::before,
+.tile::after { display: none; } /* the sharp registration marks don't fit a rounded, glossy UI */
+.tile-cover { border-radius: 6px 6px 0 0; }
+.tile:hover {
+  border-color: var(--brass);
+  box-shadow: 0 10px 26px rgba(102, 192, 244, 0.18);
+}
+
+.modal-content { border-radius: 10px; }
+.course-item { border-radius: 8px; }

@@ -1,0 +1,109 @@
+/* ============================================================
+   MIDNIGHT — a soft, dreamy night-sky theme: pill-shaped everything,
+   gentle glowing shadows, and a slowly twinkling star field behind it
+   all. Slower transitions throughout, to match the mood.
+   ============================================================ */
+
+:root {
+  --ink: #0a0a0f;
+  --panel: #15151d;
+  --panel-raised: #1a1a24;
+  --line: #2a2a3a;
+  --brass: #9b7ede;
+  --brass-dim: #6f5aa3;
+  --moss: #5a8f7b;
+  --bone: #e8e6f0;
+  --dim: #8a869c;
+  --danger: #d1587a;
+}
+
+/* ---- Twinkling star field: several layered dot-fields, each
+   twinkling at a different offset so it never looks mechanical ---- */
+
+@keyframes midnightTwinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.9; }
+}
+
+body {
+  background: var(--ink);
+  position: relative;
+}
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(1.5px 1.5px at 20px 30px, rgba(232, 230, 240, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 140px 90px, rgba(155, 126, 222, 0.6), transparent),
+    radial-gradient(1px 1px at 260px 40px, rgba(232, 230, 240, 0.5), transparent),
+    radial-gradient(1.5px 1.5px at 340px 160px, rgba(155, 126, 222, 0.5), transparent),
+    radial-gradient(1px 1px at 400px 70px, rgba(232, 230, 240, 0.6), transparent);
+  background-repeat: repeat;
+  background-size: 420px 220px;
+}
+body::before { animation: midnightTwinkle 4s ease-in-out infinite; }
+body::after {
+  background-position: 60px 100px;
+  animation: midnightTwinkle 5.5s ease-in-out infinite reverse;
+}
+#app { position: relative; z-index: 1; }
+
+/* ---- Pill-shaped, glowing buttons ---- */
+
+.courses-load-btn,
+.habit-set-btn,
+.habit-remove-btn,
+.scan-btn,
+.detail-launch-btn,
+#add-form button,
+#scan-add-btn,
+.course-item-action-btn,
+.settings-test-btn,
+.load-theme-file-btn,
+.course-active-btn,
+.about-template-btn {
+  border-radius: 999px;
+  padding-left: 20px;
+  padding-right: 20px;
+  transition: filter 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+.courses-load-btn:hover,
+.habit-set-btn:hover,
+.scan-btn:hover:not(:disabled),
+.detail-launch-btn:hover,
+.course-item-action-btn:hover {
+  box-shadow: 0 0 18px rgba(155, 126, 222, 0.45);
+  transform: translateY(-1px);
+}
+
+/* ---- Active nav: a soft glowing pill ---- */
+
+.sidebar-app-link {
+  border-radius: 999px;
+}
+.sidebar-app-link.active {
+  background: rgba(155, 126, 222, 0.12);
+  box-shadow: 0 0 10px rgba(155, 126, 222, 0.2);
+}
+
+/* ---- Tiles: soft rounded corners, moonlit glow instead of sharp brackets ---- */
+
+.tile {
+  border-radius: 14px;
+  transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+}
+.tile::before,
+.tile::after { display: none; }
+.tile-cover { border-radius: 14px 14px 0 0; }
+.tile:hover {
+  border-color: var(--brass-dim);
+  box-shadow: 0 0 24px rgba(155, 126, 222, 0.25);
+}
+
+.modal-content { border-radius: 18px; }
+.course-item { border-radius: 14px; }
+.course-card { border-radius: 14px; }
