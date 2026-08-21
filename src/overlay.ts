@@ -1,5 +1,6 @@
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { invoke } from '@tauri-apps/api/core';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import { loadApps, loadSessions, saveSessions, loadCourses, loadActiveCourseId } from './storage';
 import { formatPlaytime, initials } from './state';
 import type { AppEntry, Session } from './types';
@@ -732,12 +733,13 @@ function buildCourseContent(content: HTMLDivElement) {
 
     if (next.links && next.links.length > 0) {
       const link = next.links[0];
-      const a = document.createElement('a');
-      a.href = link.url;
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
+      const a = document.createElement('button');
+      a.type = 'button';
       a.className = 'overlay-course-link';
       a.textContent = `▶ ${link.label}`;
+      a.addEventListener('click', () => {
+        openUrl(link.url).catch((err) => console.error('Failed to open link:', err));
+      });
       content.appendChild(a);
     }
 

@@ -1,5 +1,6 @@
 import { open } from '@tauri-apps/plugin-dialog';
 import { readTextFile } from '@tauri-apps/plugin-fs';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import { invoke } from '@tauri-apps/api/core';
 import type { Course, CourseFile, CourseItem, CourseProgress, Lesson, TaskItem } from './types';
 import {
@@ -506,12 +507,13 @@ function buildItemRow(course: Course, item: CourseItem, progress: CourseProgress
       const linksWrap = document.createElement('div');
       linksWrap.className = 'course-item-links';
       for (const link of item.links) {
-        const a = document.createElement('a');
-        a.href = link.url;
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
+        const a = document.createElement('button');
+        a.type = 'button';
         a.className = 'course-item-link';
         a.textContent = `▶ ${link.label}`;
+        a.addEventListener('click', () => {
+          openUrl(link.url).catch((err) => console.error('Failed to open link:', err));
+        });
         linksWrap.appendChild(a);
       }
       row.appendChild(linksWrap);
