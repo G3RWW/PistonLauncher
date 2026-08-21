@@ -3,11 +3,13 @@ import { invoke } from '@tauri-apps/api/core';
 import { loadApps, loadSessions, saveSessions } from './storage';
 import { formatPlaytime, initials } from './state';
 import type { AppEntry, Session } from './types';
-import { type PanelId, loadPanelLayouts, createPanel, renderDock, reflowPanelsToCanvas } from './overlayPanels';
+import { type PanelId, type PanelLayouts, loadPanelLayouts, createPanel, renderDock, reflowPanelsToCanvas } from './overlayPanels';
 import { matchOverlayToWindow, toggleOverlay, hideOverlay } from './overlayShortcut';
 import { applyActiveTheme } from './themeApply';
 import { getHabitAppId } from './habit';
 import { currentStreak, longestStreak, launchedToday } from './statsHelpers';
+import { notify, playChime } from './notify';
+import { loadPomodoro, savePomodoro, loadReminders, saveReminders } from './timerState';
 
 const CONTEXT_KEY = 'launcher-overlay-context';
 const DAILY_GOAL_KEY = 'launcher-daily-goals'; // Record<appId, minutes>
@@ -102,41 +104,6 @@ function saveWeeklyTrendSettings(s: WeeklyTrendSettings) {
 
 function sessionCountForDayWindow(sessions: Session[], appId: string, dayStart: number, dayEnd: number): number {
   return sessions.filter((s) => s.appId === appId && s.startedAt >= dayStart && s.startedAt < dayEnd).length;
-}
-
-type PomodoroState = {
-  mode: 'idle' | 'work' | 'break';
-  endsAt: number | null; // when the current running phase ends
-  pausedRemainingMs: number | null; // remaining ms, if paused mid-phase
-  workMin: number;
-  breakMin: number;
-};
-const POMODORO_KEY = 'overlay-pomodoro-state';
-
-function loadPomodoro(): PomodoroState {
-  const raw = localStorage.getItem(POMODORO_KEY);
-  if (raw) {
-    try {
-      return { mode: 'idle', endsAt: null, pausedRemainingMs: null, workMin: 25, breakMin: 5, ...JSON.parse(raw) };
-    } catch {
-      /* fall through */
-    }
-  }
-  return { mode: 'idle', endsAt: null, pausedRemainingMs: null, workMin: 25, breakMin: 5 };
-}
-function savePomodoro(s: PomodoroState) {
-  localStorage.setItem(POMODORO_KEY, JSON.stringify(s));
-}
-
-type Reminder = { id: string; label: string; intervalMin: number; lastFiredAt: number };
-const REMINDERS_KEY = 'overlay-reminders';
-
-function loadReminders(): Reminder[] {
-  const raw = localStorage.getItem(REMINDERS_KEY);
-  return raw ? JSON.parse(raw) : [];
-}
-function saveReminders(list: Reminder[]) {
-  localStorage.setItem(REMINDERS_KEY, JSON.stringify(list));
 }
 
 // ---------------------------------------------------------------------
@@ -676,6 +643,7 @@ function buildRemindersContent(content: HTMLDivElement) {
       const row = document.createElement('div');
       row.className = 'overlay-reminder-row';
       row.dataset.reminderId = r.id;
+      row.dataset.lastFired = String(r.lastFiredAt);
 
       const text = document.createElement('span');
       text.className = 'overlay-reminder-text';
@@ -709,8 +677,6 @@ function buildRemindersContent(content: HTMLDivElement) {
 // one case where every panel's content genuinely needs fresh data.
 // ---------------------------------------------------------------------
 
-const mountedPanels: Partial<Record<PanelId, HTMLDivElement>> = {};
-
 function panelBuilders(): Record<PanelId, (content: HTMLDivElement) => void> {
   return {
     spotlight: (content) => buildSpotlightContent(content, currentApp!, currentSession!),
@@ -724,10 +690,22 @@ function panelBuilders(): Record<PanelId, (content: HTMLDivElement) => void> {
   };
 }
 
+const mountedPanels: Partial<Record<PanelId, HTMLDivElement>> = {};
+
+// Loaded once and mutated in place from here on — every function below
+// that touches panel positions/sizes reads and writes this SAME object,
+// rather than each calling loadPanelLayouts() independently. That
+// matters because loadPanelLayouts() parses a fresh object tree on every
+// call: if e.g. the resize-driven reflow below clamped a panel's x/y in
+// its own freshly-loaded copy, an already-mounted panel's drag handler
+// (holding a reference from an earlier, separate load) would never see
+// that correction — so grabbing the panel would snap it right back to
+// its stale, uncorrected — often off-canvas — position.
+let panelLayouts: PanelLayouts = loadPanelLayouts();
+
 function mountPanel(id: PanelId) {
   if (mountedPanels[id]) return; // already mounted — don't rebuild it
-  const layouts = loadPanelLayouts();
-  const panel = createPanel(id, layouts, () => unmountPanel(id));
+  const panel = createPanel(id, panelLayouts, () => unmountPanel(id));
   if (!panel) return;
   panelBuilders()[id](panel.content);
   document.querySelector<HTMLDivElement>('#overlay-canvas')!.appendChild(panel.el);
@@ -744,13 +722,21 @@ function unmountPanel(id: PanelId) {
 // This is what dock clicks call: it only ever touches the ONE panel
 // whose state actually changed.
 function syncPanelsToLayout() {
-  const layouts = loadPanelLayouts();
-  (Object.keys(layouts) as PanelId[]).forEach((id) => {
-    const shouldBeOpen = !layouts[id].closed;
+  (Object.keys(panelLayouts) as PanelId[]).forEach((id) => {
+    const shouldBeOpen = !panelLayouts[id].closed;
     const isMounted = !!mountedPanels[id];
     if (shouldBeOpen && !isMounted) mountPanel(id);
     else if (!shouldBeOpen && isMounted) unmountPanel(id);
   });
+
+  // Newly-mounted panels use saved/default coordinates that may not
+  // match the canvas's actual current size — e.g. right after the
+  // overlay window resizes to match a freshly-tracked app, or on a
+  // panel's very first-ever mount, before that resize has happened yet.
+  // Clamp them into view immediately rather than waiting on the next
+  // resize event (or a manual drag) to self-correct.
+  const canvas = document.querySelector<HTMLDivElement>('#overlay-canvas');
+  if (canvas) reflowPanelsToCanvas(canvas, panelLayouts, mountedPanels);
 }
 
 // Full teardown + remount of every open panel — used only when the
@@ -810,17 +796,33 @@ function updateLiveStats() {
   updateHabitContent();
 }
 
+// Detects a finished pomodoro phase, advances to the next one, and
+// fires the completion alert (sound + system notification). Runs on
+// every tick regardless of whether the pomodoro panel is mounted or
+// this overlay window is even visible — that's exactly the case this
+// needs to cover: overlay hidden, panel closed, nothing on screen to
+// tell the user time is up.
+function checkPomodoroCompletion() {
+  const s = loadPomodoro();
+  if (s.mode === 'idle' || s.endsAt == null || Date.now() < s.endsAt) return;
+
+  const finishedMode = s.mode;
+  const nextMode = finishedMode === 'work' ? 'break' : 'work';
+  const nextMin = nextMode === 'work' ? s.workMin : s.breakMin;
+  savePomodoro({ ...s, mode: nextMode, endsAt: Date.now() + nextMin * 60000, pausedRemainingMs: null });
+
+  if (finishedMode === 'work') {
+    playChime('focus-end');
+    notify('Focus session complete', `Time for a ${s.breakMin} min break.`);
+  } else {
+    playChime('break-end');
+    notify('Break complete', `Back to focus for ${s.workMin} min.`);
+  }
+}
+
 function tickPomodoro() {
   const display = document.querySelector<HTMLElement>('#overlay-pomodoro-display');
-  if (!display) return; // panel not mounted
-
-  const s = loadPomodoro();
-  if (s.mode !== 'idle' && s.endsAt != null && Date.now() >= s.endsAt) {
-    // Phase finished — auto-switch to the other one.
-    const nextMode = s.mode === 'work' ? 'break' : 'work';
-    const nextMin = nextMode === 'work' ? s.workMin : s.breakMin;
-    savePomodoro({ ...s, mode: nextMode, endsAt: Date.now() + nextMin * 60000, pausedRemainingMs: null });
-  }
+  if (!display) return; // panel not mounted — nothing to draw, alerting already happened above
 
   const fresh = loadPomodoro();
   const modeLabel = document.querySelector<HTMLElement>('#overlay-pomodoro-mode');
@@ -837,38 +839,66 @@ function tickPomodoro() {
   }
 }
 
-function tickReminders() {
-  const list = document.querySelector<HTMLElement>('.overlay-reminder-list');
-  if (!list) return; // panel not mounted
-
+// Fires (sound + system notification) any reminder whose interval has
+// elapsed and resets its clock. Runs every tick independent of the
+// reminders panel being mounted, so a reminder still reaches the user
+// while the overlay is hidden or that panel's been closed.
+function checkReminderCompletions() {
   const reminders = loadReminders();
   const now = Date.now();
   let changed = false;
 
   for (const r of reminders) {
     const intervalMs = r.intervalMin * 60000;
-    const elapsed = now - r.lastFiredAt;
-    const row = list.querySelector<HTMLElement>(`[data-reminder-id="${r.id}"]`);
-    const countdownEl = row?.querySelector<HTMLElement>('.overlay-reminder-countdown');
-
-    if (elapsed >= intervalMs) {
+    if (now - r.lastFiredAt >= intervalMs) {
       r.lastFiredAt = now;
       changed = true;
-      row?.classList.add('overlay-reminder-fired');
-      setTimeout(() => row?.classList.remove('overlay-reminder-fired'), 3000);
-    }
-
-    if (countdownEl) {
-      const remaining = Math.max(0, intervalMs - (now - r.lastFiredAt));
-      countdownEl.textContent = formatCountdown(remaining);
+      playChime('reminder');
+      notify('Reminder', r.label);
     }
   }
 
   if (changed) saveReminders(reminders);
 }
 
+function tickReminders() {
+  const list = document.querySelector<HTMLElement>('.overlay-reminder-list');
+  if (!list) return; // panel not mounted — nothing to draw, alerting already happened above
+
+  const reminders = loadReminders();
+  const now = Date.now();
+
+  for (const r of reminders) {
+    const intervalMs = r.intervalMin * 60000;
+    const row = list.querySelector<HTMLElement>(`[data-reminder-id="${r.id}"]`);
+    const countdownEl = row?.querySelector<HTMLElement>('.overlay-reminder-countdown');
+
+    if (countdownEl) {
+      const remaining = Math.max(0, intervalMs - (now - r.lastFiredAt));
+      countdownEl.textContent = formatCountdown(remaining);
+    }
+
+    // Flash the row the moment its lastFiredAt actually changes, so the
+    // panel's UI — if it happens to be visible — still shows the fire.
+    if (row && row.dataset.lastFired !== String(r.lastFiredAt)) {
+      row.dataset.lastFired = String(r.lastFiredAt);
+      row.classList.add('overlay-reminder-fired');
+      setTimeout(() => row.classList.remove('overlay-reminder-fired'), 3000);
+    }
+  }
+}
+
 function render() {
   applyActiveTheme({ stripBodyBackground: true });
+
+  // Must run unconditionally — independent of whether an app is being
+  // tracked, whether the pomodoro/reminders panels are mounted, or
+  // whether this overlay window is even visible right now. Hiding the
+  // overlay (vs closing it) keeps this webview's JS alive, so this is
+  // exactly where a finished timer needs to still get through to the
+  // user via sound + a system notification.
+  checkPomodoroCompletion();
+  checkReminderCompletions();
 
   const context = getContext();
   const apps = loadApps();
@@ -894,7 +924,7 @@ setInterval(render, 1000);
 // ---------------------------------------------------------------------
 
 function refreshDock() {
-  renderDock(loadPanelLayouts(), () => {
+  renderDock(panelLayouts, () => {
     syncPanelsToLayout();
     refreshDock();
   });
@@ -915,7 +945,7 @@ const canvasResizeObserver = new ResizeObserver(() => {
   if (reflowRaf != null) return;
   reflowRaf = requestAnimationFrame(() => {
     reflowRaf = null;
-    reflowPanelsToCanvas(overlayCanvasEl, loadPanelLayouts(), mountedPanels);
+    reflowPanelsToCanvas(overlayCanvasEl, panelLayouts, mountedPanels);
   });
 });
 canvasResizeObserver.observe(overlayCanvasEl);

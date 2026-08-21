@@ -44,6 +44,20 @@ export function startSession(appId: string, pid?: number): Session {
   return session;
 }
 
+// Keeps an in-progress session alive under a new pid, used when a
+// tracked app's process disappears and reappears under a different pid
+// in quick succession (a self-update relaunch, an auto-restart) rather
+// than genuinely quitting. Anything that depends on "is this app
+// currently tracked" — like the overlay's focus-check — otherwise loses
+// track of the app the moment that happens.
+export function reassignSessionPid(sessionId: string, pid: number) {
+  const session = sessions.find((s) => s.id === sessionId);
+  if (session && !session.endedAt) {
+    session.pid = pid;
+    saveSessions(sessions);
+  }
+}
+
 export function endSession(sessionId: string) {
   const session = sessions.find((s) => s.id === sessionId);
   if (session && !session.endedAt) {

@@ -1285,6 +1285,158 @@ body.is-dragging * {
   color: var(--brass);
 }
 
+/* ---------- Settings modal (Sound / Themes / Shortcuts) ---------- */
+
+.settings-content {
+  width: 560px;
+}
+
+.settings-body {
+  display: flex;
+  gap: 0;
+  margin-top: 14px;
+  min-height: 320px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.settings-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 140px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--line);
+  padding-right: 12px;
+}
+
+.settings-tab {
+  background: none;
+  border: none;
+  text-align: left;
+  color: var(--dim);
+  padding: 9px 10px;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11.5px;
+  letter-spacing: 0.3px;
+}
+.settings-tab:hover {
+  color: var(--bone);
+  background: var(--panel-raised);
+}
+.settings-tab.active {
+  color: var(--brass);
+  background: var(--panel-raised);
+}
+
+.settings-panels {
+  flex: 1;
+  padding-left: 18px;
+  overflow-y: auto;
+}
+
+.settings-panel {
+  display: none;
+}
+.settings-panel.active {
+  display: block;
+}
+
+.settings-panel-intro {
+  color: var(--dim);
+  font-size: 11.5px;
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.settings-row label {
+  flex: none;
+  width: 56px;
+  color: var(--dim);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+}
+.settings-row input[type='range'] {
+  flex: 1;
+  accent-color: var(--brass);
+}
+.settings-value {
+  flex: none;
+  width: 38px;
+  text-align: right;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  color: var(--dim);
+}
+
+.settings-select {
+  flex: 1;
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
+  color: var(--bone);
+  padding: 6px 8px;
+  font-size: 11.5px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.settings-select:focus {
+  outline: none;
+  border-color: var(--brass);
+}
+.settings-select option {
+  background: var(--panel);
+  color: var(--bone);
+}
+
+.settings-file-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.settings-file-name {
+  flex: 1;
+  color: var(--bone);
+  font-size: 11.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.settings-file-row button {
+  flex: none;
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
+  color: var(--dim);
+  padding: 6px 10px;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+}
+.settings-file-row button:hover {
+  border-color: var(--brass);
+  color: var(--brass);
+}
+
+.settings-test-btn {
+  background: var(--panel-raised);
+  border: 1px dashed var(--line);
+  color: var(--dim);
+  padding: 8px 14px;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+}
+.settings-test-btn:hover {
+  border-color: var(--brass);
+  color: var(--brass);
+}
+
 /* ---------- Theme modal (file-based) ---------- */
 
 .theme-active-label {

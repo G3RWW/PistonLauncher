@@ -70,7 +70,7 @@ async function deleteCustomTheme(id: string) {
   refreshTheme();
 }
 
-function renderThemeModalLists() {
+export function renderThemeModalLists() {
   document.querySelectorAll<HTMLButtonElement>('.theme-swatch').forEach((btn) => {
     const isActive = activeRef.kind === 'builtin' && activeRef.name === btn.dataset.themeName;
     btn.classList.toggle('active', isActive);
@@ -114,15 +114,7 @@ function renderThemeModalLists() {
 // Apply the saved theme (or default to Blueprint) on startup.
 refreshTheme();
 
-// ---- Theme modal wiring ----
-
-document.querySelector<HTMLButtonElement>('#theme-btn')!.addEventListener('click', () => {
-  renderThemeModalLists();
-  document.querySelector('#theme-modal')!.classList.remove('hidden');
-});
-document.querySelector<HTMLButtonElement>('#theme-close-btn')!.addEventListener('click', () => {
-  document.querySelector('#theme-modal')!.classList.add('hidden');
-});
+// ---- Theme controls (rendered inside the shared Settings modal) ----
 
 document.querySelectorAll<HTMLButtonElement>('.theme-swatch').forEach((btn) => {
   btn.addEventListener('click', () => {

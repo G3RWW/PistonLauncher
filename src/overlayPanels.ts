@@ -9,7 +9,7 @@ export type PanelLayout = {
   closed: boolean;
 };
 
-type PanelLayouts = Record<PanelId, PanelLayout>;
+export type PanelLayouts = Record<PanelId, PanelLayout>;
 
 const LAYOUT_KEY = 'overlay-panel-layout';
 

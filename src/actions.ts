@@ -5,7 +5,7 @@ import type { AppEntry } from './types';
 import { apps, setApps, categories, setCategories, currentView, setCurrentView } from './state';
 import { saveApps, saveCategories } from './storage';
 import { customPrompt, customConfirm, customAlert } from './dialogs';
-import { sessions, hasActiveSession, startSession, endSession, removeSessionsForApp } from './sessions';
+import { sessions, hasActiveSession, startSession, endSession, reassignSessionPid, removeSessionsForApp } from './sessions';
 import { refreshCategorySection, refreshSidebarGroup, refreshRecentSection, refreshAppEverywhere, renderView, renderLibrary, renderSidebarNav } from './render';
 
 export function upsertApp(entry: { name: string; path: string; category: string; icon?: string }) {
@@ -186,17 +186,56 @@ export async function deleteCategory(name: string) {
   renderView(); // structural: category set itself changed
 }
 
+// After a tracked process disappears, some apps (self-updaters, some
+// game launchers) don't actually quit — they close and relaunch a new
+// process under a brand new pid. If that happens within a few seconds,
+// treat it as a continuation of the same running instance rather than
+// the app closing. Without this, the app's session ends the moment it
+// self-updates, and anything that depends on "is this app currently
+// tracked" — most notably the overlay's global shortcut, which only
+// acts on a focused, tracked app — silently stops responding. Since the
+// shortcut's own key binding was never actually broken, re-registering
+// it in Settings doesn't fix anything either; only re-establishing
+// tracking does.
+async function findRelaunchedPid(app: AppEntry): Promise<number | null> {
+  const exeName = app.path.split(/[\\/]/).pop();
+  if (!exeName) return null;
+
+  const RETRY_DELAY_MS = 1000;
+  const MAX_ATTEMPTS = 5; // ~5 second grace window
+
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+    try {
+      const pid = await invoke<number | null>('find_pid_by_name', { name: exeName });
+      if (pid != null) return pid;
+    } catch {
+      // fall through and keep trying — a transient process-list read
+      // failure shouldn't cancel the grace window early.
+    }
+  }
+  return null;
+}
+
 // Polls a PID until it exits, then closes the session and refreshes the UI.
 // Shared by launchAndTrack (fresh launches) and reconcileOrphanedSessions
 // (resuming a session that was still active when the window last reloaded).
 function monitorProcess(pid: number, sessionId: string, app: AppEntry) {
   const interval = setInterval(async () => {
     const running = await invoke<boolean>('is_running', { pid });
-    if (!running) {
-      clearInterval(interval);
-      endSession(sessionId);
-      refreshAppEverywhere(app);
+    if (running) return;
+
+    clearInterval(interval);
+
+    const relaunchedPid = await findRelaunchedPid(app);
+    if (relaunchedPid != null) {
+      reassignSessionPid(sessionId, relaunchedPid);
+      monitorProcess(relaunchedPid, sessionId, app);
+      return;
     }
+
+    endSession(sessionId);
+    refreshAppEverywhere(app);
   }, 1500);
 }
 

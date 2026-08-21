@@ -37,16 +37,15 @@
                   <button id="new-category-btn">New Category</button>
                 </div>
               </div>
-              <div class="menu" data-menu="view">
-                <button class="menu-trigger">View</button>
+              <div class="menu" data-menu="settings">
+                <button class="menu-trigger">Settings</button>
                 <div class="menu-dropdown">
-                  <button id="theme-btn">Theme</button>
+                  <button id="settings-btn">Preferences...</button>
                 </div>
               </div>
               <div class="menu" data-menu="help">
                 <button class="menu-trigger">Help</button>
                 <div class="menu-dropdown">
-                  <button id="hotkeys-btn">Keyboard Shortcuts</button>
                   <button id="about-btn">About</button>
                 </div>
               </div>
@@ -132,36 +131,44 @@
       </div>
     </div>
 
-    <!-- Theme picker -->
-    <div id="theme-modal" class="modal hidden">
-      <div class="modal-content">
-        <h2>Theme</h2>
-        <p class="theme-active-label">Active: <span id="active-theme-label"></span></p>
+    <!-- Settings: Sound, Themes, Shortcuts -->
+    <div id="settings-modal" class="modal hidden">
+      <div class="modal-content settings-content">
+        <h2>Settings</h2>
 
-        <div class="theme-section-label">System</div>
-        <div class="theme-options">
-          <button class="theme-swatch" data-theme-name="Blueprint">Blueprint</button>
-          <button class="theme-swatch" data-theme-name="Steam">Steam</button>
-          <button class="theme-swatch" data-theme-name="Midnight">Midnight</button>
+        <div class="settings-body">
+          <div class="settings-tabs">
+            <button class="settings-tab active" data-tab="sound">Sound</button>
+            <button class="settings-tab" data-tab="themes">Themes</button>
+            <button class="settings-tab" data-tab="shortcuts">Shortcuts</button>
+          </div>
+
+          <div class="settings-panels">
+            <div id="settings-panel-sound" class="settings-panel active"></div>
+
+            <div id="settings-panel-themes" class="settings-panel">
+              <p class="theme-active-label">Active: <span id="active-theme-label"></span></p>
+
+              <div class="theme-section-label">System</div>
+              <div class="theme-options">
+                <button class="theme-swatch" data-theme-name="Blueprint">Blueprint</button>
+                <button class="theme-swatch" data-theme-name="Steam">Steam</button>
+                <button class="theme-swatch" data-theme-name="Midnight">Midnight</button>
+              </div>
+
+              <div class="theme-section-label">Custom</div>
+              <div id="custom-theme-list" class="custom-theme-list"></div>
+              <button id="load-theme-file-btn" class="load-theme-file-btn">+ Add Custom Theme File (.css)...</button>
+            </div>
+
+            <div id="settings-panel-shortcuts" class="settings-panel">
+              <div id="hotkeys-list" class="hotkeys-list"></div>
+            </div>
+          </div>
         </div>
 
-        <div class="theme-section-label">Custom</div>
-        <div id="custom-theme-list" class="custom-theme-list"></div>
-        <button id="load-theme-file-btn" class="load-theme-file-btn">+ Add Custom Theme File (.css)...</button>
-
         <div class="modal-actions">
-          <button id="theme-close-btn">Close</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Keyboard shortcuts help -->
-    <div id="hotkeys-modal" class="modal hidden">
-      <div class="modal-content">
-        <h2>Keyboard Shortcuts</h2>
-        <div id="hotkeys-list" class="hotkeys-list"></div>
-        <div class="modal-actions">
-          <button id="hotkeys-close-btn">Close</button>
+          <button id="settings-close-btn">Close</button>
         </div>
       </div>
     </div>

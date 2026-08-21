@@ -19,7 +19,7 @@ function buildEntries(): Entry[] {
   ];
 }
 
-function renderHotkeysList() {
+export function renderHotkeysList() {
   const container = document.querySelector<HTMLDivElement>('#hotkeys-list')!;
   container.innerHTML = '';
 
@@ -83,11 +83,3 @@ async function finishCapture(id: HotkeyId, combo: string, keysEl: HTMLElement, b
   keysEl.textContent = combo;
   btn.disabled = false;
 }
-
-document.querySelector<HTMLButtonElement>('#hotkeys-btn')!.addEventListener('click', () => {
-  renderHotkeysList();
-  document.querySelector('#hotkeys-modal')!.classList.remove('hidden');
-});
-document.querySelector<HTMLButtonElement>('#hotkeys-close-btn')!.addEventListener('click', () => {
-  document.querySelector('#hotkeys-modal')!.classList.add('hidden');
-});
